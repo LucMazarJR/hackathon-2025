@@ -73,17 +73,19 @@ export default function Calendar() {
               </button>
             </div>
             <div className="space-y-2">
-              {location.pathname !== '/profile' && (
-                <a href="/profile" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
-                  Perfil
+              {location.pathname !== '/dashboard' && (
+                <a href="/dashboard" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+                  Dashboard
                 </a>
               )}
-              <a href="/1/chat" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
-                Chat
-              </a>
-              <button className="w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+              {location.pathname !== '/chat' && (
+                <a href="/chat" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+                  Chat
+                </a>
+              )}
+              <a href="/profile" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
                 Configurações
-              </button>
+              </a>
             </div>
           </div>
         </>

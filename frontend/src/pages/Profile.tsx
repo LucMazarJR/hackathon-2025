@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
+import { useMenu } from '../hooks/useMenu'
 
 type UserType = 'patient' | 'doctor' | 'admin'
 
@@ -14,45 +15,44 @@ interface User {
 }
 
 export default function Profile() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isClosing, setIsClosing] = useState(false)
-  const [shouldRender, setShouldRender] = useState(false)
-  const [isOpening, setIsOpening] = useState(false)
+  const { shouldRender, isClosing, isOpening, handleClose, handleOpen } = useMenu()
   const location = useLocation()
-
-  useEffect(() => {
-    if (isMenuOpen) {
-      setShouldRender(true)
-      setIsClosing(false)
-      setIsOpening(true)
-      const timer = setTimeout(() => setIsOpening(false), 50)
-      return () => clearTimeout(timer)
-    } else if (shouldRender) {
-      setIsClosing(true)
-      const timer = setTimeout(() => {
-        setShouldRender(false)
-        setIsClosing(false)
-      }, 300)
-      return () => clearTimeout(timer)
+  const [searchParams] = useSearchParams()
+  
+  // Pega tipo da URL ou usa 'patient' como padrão
+  const userTypeFromUrl = (searchParams.get('type') as UserType) || 'patient'
+  
+  // Dados mockados específicos por tipo
+  const getUserData = (type: UserType): User => {
+    switch (type) {
+      case 'doctor':
+        return {
+          id: '1',
+          name: 'Dr. João Silva',
+          email: 'dr.joao@hospital.com',
+          type: 'doctor',
+          crm: '12345-SP',
+          specialty: 'Cardiologia'
+        }
+      case 'admin':
+        return {
+          id: '1',
+          name: 'Admin Silva',
+          email: 'admin@sistema.com',
+          type: 'admin'
+        }
+      default: // patient
+        return {
+          id: '1',
+          name: 'João Silva',
+          email: 'joao@email.com',
+          type: 'patient',
+          cpf: '123.456.789-00'
+        }
     }
-  }, [isMenuOpen, shouldRender])
-
-  const handleClose = () => {
-    setIsMenuOpen(false)
-  }
-
-  const handleOpen = () => {
-    setIsMenuOpen(true)
   }
   
-  // TODO: Pegar dados do usuário logado
-  const [user] = useState<User>({
-    id: '1',
-    name: 'João Silva',
-    email: 'joao@email.com',
-    type: 'patient',
-    cpf: '123.456.789-00'
-  })
+  const [user] = useState<User>(getUserData(userTypeFromUrl))
 
   const renderPatientProfile = () => (
     <div className="space-y-6">
@@ -177,17 +177,24 @@ export default function Profile() {
               </button>
             </div>
             <div className="space-y-2">
+              {location.pathname !== '/dashboard' && (
+                <a href="/dashboard" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+                  Dashboard
+                </a>
+              )}
               {location.pathname !== '/calendar' && (
                 <a href="/calendar" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
                   Calendário
                 </a>
               )}
-              <a href="/1/chat" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
-                Chat
-              </a>
-              <button className="w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+              {location.pathname !== '/chat' && (
+                <a href="/chat" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+                  Chat
+                </a>
+              )}
+              <a href="/profile" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
                 Configurações
-              </button>
+              </a>
             </div>
           </div>
         </>
