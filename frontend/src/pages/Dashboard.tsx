@@ -6,7 +6,7 @@ import DoctorForm from '../components/admin/DoctorForm'
 import DoctorList from '../components/admin/DoctorList'
 import ContextForm from '../components/admin/ContextForm'
 import ContextList from '../components/admin/ContextList'
-
+import {fetchContext} from "../lib/api/adm/fetchBotContext.js"
 type UserType = 'patient' | 'doctor' | 'admin'
 
 export default function Dashboard() {
@@ -126,6 +126,7 @@ Caso alguma pergunta seja feita fora do escopo, responda com "Desculpe, não pos
   const handleSaveContext = (contextData: { name: string; instructions: string }) => {
     setContext(contextData)
     setContextModalValue(contextData)
+    fetchContext(String(contextModalValue));
     // TODO: Enviar contextModalValue para o banco
     
     console.log('Enviando para banco:', contextData)

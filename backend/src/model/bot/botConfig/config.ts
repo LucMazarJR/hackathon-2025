@@ -30,7 +30,7 @@ const client = new OpenAI({
  */
 export const agent = new Agent({
   name: "Ajudant",
-  instructions: `Suas novas instruções aqui...`,
+  instructions: `[object Object]`,
 });
 
 /**
