@@ -1,18 +1,23 @@
+import NavButton from "../components/buttons/nav_buton";
+
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
       {/* Hero Section */}
       <section className="px-4 pt-16 pb-12 text-center">
         <h1 className="text-4xl tablet:text-5xl desktop:text-6xl font-bold text-gray-900 mb-6">
           Bem-vindo ao
-          <span className="block text-blue-600">MedBot</span>
+          <span className="block text-primary">MedBot</span>
         </h1>
         <p className="text-lg tablet:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
           Assistente inteligente para agendamentos, consulta de exames e suporte a processos médicos.
         </p>
-        <button className="w-full tablet:w-auto bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors">
+        <NavButton
+          className="w-full tablet:w-auto bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors"
+          path="/login"
+        >
           Começar Agora
-        </button>
+        </NavButton>
       </section>
 
       {/* Features */}
@@ -22,13 +27,13 @@ export default function Home() {
         </h2>
         <div className="space-y-6 tablet:grid tablet:grid-cols-2 desktop:grid-cols-3 tablet:gap-6 tablet:space-y-0 max-w-6xl mx-auto">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
               <span className="text-2xl">📅</span>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Agendamentos</h3>
             <p className="text-gray-600">Marque consultas e procedimentos de forma rápida e fácil.</p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
               <span className="text-2xl">🔬</span>
@@ -36,7 +41,7 @@ export default function Home() {
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Consultar Exames</h3>
             <p className="text-gray-600">Verifique resultados e tire dúvidas sobre seus exames.</p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
               <span className="text-2xl">💬</span>
@@ -56,7 +61,7 @@ export default function Home() {
           <p className="text-gray-600 mb-8">
             Experimente nosso assistente inteligente e simplifique seus processos médicos.
           </p>
-          <button className="w-full tablet:w-auto bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors">
+          <button className="w-full tablet:w-auto bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors">
             Acessar Chat
           </button>
         </div>
