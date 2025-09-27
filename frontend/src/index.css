@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+  
+  body {
+    overscroll-behavior: none;
+  }
+  
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
