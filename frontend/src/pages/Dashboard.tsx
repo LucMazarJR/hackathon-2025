@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useMenu } from '../hooks/useMenu'
 import { useUser } from '../contexts/UserContext'
@@ -91,18 +91,28 @@ SEMPRE EXPLIQUE O PASSO A PASSO.
 Caso alguma pergunta seja feita fora do escopo, responda com "Desculpe, não posso ajudar com isso."`
   })
   
+  // Estados para controle do modal e valor para banco
+  const [contextModalValue, setContextModalValue] = useState(context)
+  
+  // Buscar contexto do banco ao carregar página
+  useEffect(() => {
+    //Implementar Fetch inicial do context
+  }, [])
+  
   const [isContextFormOpen, setIsContextFormOpen] = useState(false)
   const [isDoctorFormOpen, setIsDoctorFormOpen] = useState(false)
   
   const handleSaveContext = (contextData: { name: string; instructions: string }) => {
-    setContext({
-      name: contextData.name,
-      instructions: contextData.instructions
-    })
+    setContext(contextData)
+    setContextModalValue(contextData)
+    // TODO: Enviar contextModalValue para o banco
+    
+    console.log('Enviando para banco:', contextData)
     alert('Contexto atualizado com sucesso!')
   }
   
   const handleEditContext = () => {
+    setContextModalValue(context) // Sincroniza valor do modal
     setIsContextFormOpen(true)
   }
 
@@ -236,7 +246,7 @@ Caso alguma pergunta seja feita fora do escopo, responda com "Desculpe, não pos
         isOpen={isContextFormOpen}
         onClose={() => setIsContextFormOpen(false)}
         onSave={handleSaveContext}
-        editingContext={context}
+        editingContext={contextModalValue}
       />
     </div>
   )
