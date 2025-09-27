@@ -1,26 +1,48 @@
-import { useState } from 'react'
-import ChatSidebar from '../components/layout/ChatSidebar'
-import Message from '../components/layout/message'
+import { useState } from "react";
+import { fetchChatBot } from "../lib/api/bot/fecthBot.ts";
+import ChatSidebar from "../components/layout/ChatSidebar";
+import Message from "../components/layout/message";
+import FormattedMessage from "../components/layout/FormattedMessage";
+
+interface ChatMessage {
+  id: number;
+  type: "usr" | "chat";
+  message: string;
+}
 
 export default function Chat() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: 0, type: 'chat', message: 'Olá! Sou o **MedBot**, seu assistente médico virtual.\n\nEnvie uma mensagem para iniciarmos nossa conversa!' }
+  ]);
+  const [usrMessage, setUsrMessage] = useState("");
 
-  const messages = [
-    { id: 1, type: 'chat', message: 'Olá! Sou o MedBot, seu assistente médico. Como posso ajudá-lo hoje?' },
-    { id: 2, type: 'usr', message: 'Oi! Preciso agendar uma consulta' },
-    { id: 3, type: 'chat', message: 'Posso ajudá-lo com agendamentos, consulta de exames ou esclarecer dúvidas sobre procedimentos.' },
-    { id: 4, type: 'usr', message: 'Gostaria de marcar com um cardiologista' },
-    { id: 5, type: 'chat', message: 'Perfeito! Vou agendar sua consulta. Em qual especialidade você precisa?' },
-    { id: 6, type: 'usr', message: 'Pode ser na próxima semana, de preferência pela manhã' }
-  ]
+  const handleSendMessage = async () => {
+    const userMsg = {
+      id: messages.length + 1,
+      type: "usr" as const,
+      message: usrMessage,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setUsrMessage("");
+
+    const botResponse = await fetchChatBot(usrMessage);
+    const botMsg = {
+      id: messages.length + 2,
+      type: "chat" as const,
+      message: botResponse.message,
+    };
+    setMessages((prev) => {
+      const updatedMessages = [...prev, botMsg];
+      localStorage.setItem("messages", JSON.stringify(updatedMessages));
+      return updatedMessages;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-white flex">
       {/* Sidebar Modal */}
-      <ChatSidebar
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-      />
+      <ChatSidebar isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       {/* Fixed Menu Button */}
       <button
@@ -36,31 +58,44 @@ export default function Chat() {
         <div className="flex-1 p-4 pt-20 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             {messages.map((msg) => (
-              <Message 
-                key={msg.id} 
-                orientation={msg.type === 'chat' ? 'left' : 'right'}
+              <Message
+                key={msg.id}
+                orientation={msg.type === "chat" ? "left" : "right"}
               >
-                {msg.message}
+                <FormattedMessage 
+                  content={msg.message} 
+                  isBot={msg.type === "chat"} 
+                />
               </Message>
             ))}
-
           </div>
         </div>
 
         {/* Input Area */}
         <div className="border-t border-gray-200 p-4">
           <div className="max-w-4xl mx-auto flex gap-2">
-            <input
-              type="text"
+            <textarea
               placeholder="Digite sua mensagem..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+              value={usrMessage}
+              onChange={(e) => setUsrMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendMessage()
+                }
+              }}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none min-h-[48px] max-h-32"
+              rows={1}
             />
-            <button className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+            <button
+              onClick={handleSendMessage}
+              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors self-end"
+            >
               Enviar
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
