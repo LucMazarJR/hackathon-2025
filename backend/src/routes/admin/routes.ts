@@ -1,0 +1,1 @@
+export let adminContext:string = "/auth/admin/context";
