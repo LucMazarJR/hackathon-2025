@@ -1,0 +1,84 @@
+/**
+ * @fileoverview Arquivo de configuração do compilador TypeScript (tsconfig.json).
+ * Ele especifica as opções do compilador, os arquivos que devem ser incluídos
+ * no projeto e os diretórios a serem excluídos.
+ */
+{
+  /**
+   * Opções que controlam como o TypeScript compila o código.
+   * @type {object}
+   */
+  "compilerOptions": {
+    /**
+     * Define o sistema de módulos para o código gerado.
+     * "ESNext" (ou "NodeNext") é frequentemente usado para projetos modernos
+     * de backend que usam importações e exportações ES Module (ESM).
+     * @type {string}
+     */
+    "module": "ESNext",
+
+    /**
+     * Define a versão da linguagem JavaScript de destino para o código de saída.
+     * "ES2020" garante que recursos modernos (como `BigInt` e `dynamic import()`)
+     * sejam mantidos se o ambiente de execução for compatível.
+     * @type {string}
+     */
+    "target": "ES2020",
+
+    /**
+     * Especifica o diretório de saída para os arquivos JavaScript compilados.
+     * @type {string}
+     */
+    "outDir": "./build",
+
+    /**
+     * Habilita um conjunto de verificações estritas de tipo, promovendo código
+     * mais seguro e robusto (inclui `noImplicitAny`, `noImplicitReturns`, etc.).
+     * **É altamente recomendado mantê-lo como `true`.**
+     * @type {boolean}
+     */
+    "strict": true,
+
+    /**
+     * Permite a interoperabilidade entre módulos CommonJS e ES Modules (ESM).
+     * Habilita a sintaxe `import x from 'y'` mesmo para módulos CommonJS.
+     * @type {boolean}
+     */
+    "esModuleInterop": true,
+
+    /**
+     * Pula a verificação de tipo de todos os arquivos de declaração (`.d.ts`)
+     * de bibliotecas externas (ex: `node_modules`), acelerando a compilação.
+     * @type {boolean}
+     */
+    "skipLibCheck": true,
+
+    /**
+     * Define a estratégia de resolução de módulos.
+     * "node10" (ou "NodeNext" em projetos mais novos) garante que o TypeScript
+     * encontre corretamente os módulos, como o Node.js faria.
+     * @type {string}
+     */
+    "moduleResolution": "node10"
+  },
+
+  /**
+   * Array de padrões glob (glob patterns) que indicam quais arquivos e diretórios
+   * devem ser incluídos na compilação do projeto.
+   * @type {string[]}
+   */
+  "include": [
+    "src/**/*", // Inclui todos os arquivos dentro do diretório 'src'
+    "index.ts", // Inclui o arquivo principal 'index.ts'
+    "src/test" // Inclui o diretório 'src/test' (presumivelmente para testes)
+  ],
+
+  /**
+   * Array de padrões glob que especificam quais arquivos e diretórios
+   * devem ser explicitamente **excluídos** da compilação.
+   * @type {string[]}
+   */
+  "exclude": [
+    "node_modules" // Exclui a pasta de dependências, padrão para a maioria dos projetos.
+  ]
+}
