@@ -2,6 +2,7 @@
   "name": "hackathon-2025",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
@@ -22,7 +23,7 @@
     "jsonwebtoken": "^9.0.2"
   },
   "scripts": {
-    "test": "npm run start"
+    "start": "cross-env node --loader ts-node/esm src/index.ts"
   },
   "repository": {
     "type": "git",
