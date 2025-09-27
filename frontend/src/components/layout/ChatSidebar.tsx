@@ -59,13 +59,13 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
         
         {/* Menu Items */}
         <div className="space-y-2">
-          <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
-            Nova Conversa
-          </button>
-          <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
-            Histórico
-          </button>
-          <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
+          <a href="/profile" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+            Perfil
+          </a>
+          <a href="/calendar" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+            Calendário
+          </a>
+          <button className="w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
             Configurações
           </button>
         </div>
