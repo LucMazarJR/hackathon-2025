@@ -16,12 +16,14 @@
     "express": "^5.1.0",
     "node-addon-api": "^8.5.0",
     "node-gyp-build": "^4.8.4",
+    "pg": "^8.16.3",
     "read-file": "^0.2.0",
     "readfile": "^1.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "devDependencies": {
+    "@types/pg": "^8.15.5",
     "bcrypt": "^6.0.0",
     "jsonwebtoken": "^9.0.2"
   },
