@@ -4,6 +4,7 @@
   "main": "index.js",
   "type": "module",
   "dependencies": {
+    "@openai/agents": "^0.1.6",
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
@@ -23,7 +24,8 @@
     "jsonwebtoken": "^9.0.2"
   },
   "scripts": {
-    "start": "cross-env node --loader ts-node/esm src/index.ts"
+    "build": "tsc",
+    "start": "cross-env node --watch build/index.js"
   },
   "repository": {
     "type": "git",

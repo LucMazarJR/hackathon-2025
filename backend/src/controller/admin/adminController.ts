@@ -1,4 +1,4 @@
-import * as adminModel from "../../model/admin/adminModel";
+import * as adminModel from "../../model/admin/adminModel.js";
 
 export let loginAdmin = async (
   email: string,
