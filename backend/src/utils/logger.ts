@@ -1,10 +1,11 @@
 import express from "express";
 import cors from "cors";
 import * as routerLog from "../routes/login/routes.js";
+import * as routeAdmin from "../routes/admin/routes.js";
 import * as routerBot from "../routes/bot/routes.js";
 import * as Middleware from "../middleware/middleware.js";
 import * as adminController from "../controller/admin/adminController.js";
-import * as botController from "../controller/bot/botController.js"
+import * as botController from "../controller/bot/botController.js";
 
 const app = express();
 app.use(express.json());
@@ -43,13 +44,31 @@ export const connectServer = async (PORT: number) => {
   // ROTA BOT
   app.post(routerBot.bot, async (req, res) => {
     const { message } = req.body;
-    const id = req.body.id
+    const id = req.body.id;
     try {
-      let [status, messageBot] = await botController.messageBotController(message);
+      let [status, messageBot] = await botController.messageBotController(
+        message
+      );
       return res.status(status).json({ message: messageBot });
     } catch (error) {
       console.error("Erro ao autenticar administrador:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
+
+  app.post(
+    routeAdmin.adminContext,
+    async (req, res) => {
+      const { context } = req.body;
+      try {
+        let [status, message] = await adminController.adminContextController(
+          context
+        );
+        return res.status(status).json({ message });
+      } catch (error) {
+        console.error("Erro ao processar contexto do administrador:", error);
+        return res.status(500).json({ message: "Erro interno do servidor" });
+      }
+    }
+  );
 };

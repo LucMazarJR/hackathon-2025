@@ -1,8 +1,13 @@
 import JWT from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config({
+  path: ".env.token",
+});
 
 /**
  * Middleware de autenticação para Administradores.
- * 
+ *
  * - Verifica se o cabeçalho `Authorization` existe.
  * - Extrai o token JWT do header.
  * - Valida o token usando a chave secreta `TOKEN_ADM`.

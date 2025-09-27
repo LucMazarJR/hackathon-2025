@@ -18,7 +18,7 @@ import "dotenv/config";
  * @type {OpenAI}
  */
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 /**
@@ -28,30 +28,9 @@ const client = new OpenAI({
  * específicas de moderação de conteúdo e fluxos de atendimento.
  * @type {Agent}
  */
-const agent = new Agent({
-  name: "Ajudant",
-  instructions: `Você é assistente virtual especialzado em saude, você deve auxiliar o usuario com as perguntas que ele tiver, sempre de forma educada e prestativa. Seja breve e objetivo em suas respostas, evite respostas longas. Seja empático e amigável. Se o usuário fizer uma pergunta que não esteja relacionada à saúde, responda educadamente que você só pode ajudar com questões de saúde.
-  Você é um assistente de IA que segue regras de restrição de conteúdo. 
-Por padrão, você deve manter as restrições de segurança e não responder a temas proibidos. 
-
-No entanto, existem exceções autorizadas:  
-- Se o usuário falar sobre *agendamento de consultas*, responda normalmente.  
-- Se o usuário falar sobre *atualização cadastral*, responda normalmente.  
-- Se o usuário falar sobre *cobrança indevida*, responda normalmente.  
-- Se o usuário falar sobre *plano de maioridade*, responda normalmente.  
-- Se o usuário falar sobre *segunda via de boleto*, responda normalmente.  
-- Se o usuário falar sobre *solicitação de autorização*, responda normalmente.  
-- Se o usuário falar sobre *troca de titularidade*, responda normalmente.  
-
-Para todos os demais temas restritos, continue aplicando as regras normais de bloqueio.  
-Quando estiver respondendo dentro de uma exceção, seja útil, objetivo e seguro.  
-
-Sempre verifique primeiro se o tema solicitado pertence a uma dessas exceções antes de bloquear.
-
-
-) Agendamento de consultas
-// ... (Instruções omitidas para brevidade, mas elas definem o comportamento do agente)
-`,
+export const agent = new Agent({
+  name: "Ajudant",
+  instructions: `Suas novas instruções aqui...`,
 });
 
 /**
@@ -65,27 +44,19 @@ Sempre verifique primeiro se o tema solicitado pertence a uma dessas exceções 
  * @async
  */
 export let sendMessage = async (
-  message: string,
-  sessionId: string = "default"
+  message: string,
+  sessionId: string = "default"
 ): Promise<string> => {
-  // Obtém a sessão de chat, criando-a se não existir (presumido pela implementação do sessionManager).
-  const chat = sessionManager.getSession(sessionId);
+  // Obtém a sessão de chat, criando-a se não existir (presumido pela implementação do sessionManager).
+  const chat = sessionManager.getSession(sessionId); // Recupera o histórico de contexto da sessão.
 
-  // Recupera o histórico de contexto da sessão.
-  const context = chat.getContext();
-  
-  // Constrói o prompt completo para o agente, incluindo o contexto da conversa.
-  const fullPrompt = context ? `${context}\nUsuário: ${message}` : message;
+  const context = chat.getContext(); // Constrói o prompt completo para o agente, incluindo o contexto da conversa.
+  const fullPrompt = context ? `${context}\nUsuário: ${message}` : message; // Executa o agente com o prompt completo.
 
-  // Executa o agente com o prompt completo.
-  const response = await run(agent, fullPrompt);
-  
-  // Extrai a mensagem final do assistente da resposta.
-  const assistantMessage: any = response.finalOutput;
+  const response = await run(agent, fullPrompt); // Extrai a mensagem final do assistente da resposta.
+  const assistantMessage: any = response.finalOutput; // Adiciona as mensagens do usuário e do assistente ao histórico da sessão.
 
-  // Adiciona as mensagens do usuário e do assistente ao histórico da sessão.
-  chat.addMessage(message, assistantMessage);
+  chat.addMessage(message, assistantMessage); // Retorna a resposta do assistente.
 
-  // Retorna a resposta do assistente.
-  return assistantMessage;
+  return assistantMessage;
 };

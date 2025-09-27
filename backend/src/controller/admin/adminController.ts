@@ -26,3 +26,15 @@ export let loginAdmin = async (
   let [status, message] = await adminModel.loginAdmin(email, password);
   return [status, message];
 };
+
+export let adminContextController = async (
+  context: string
+): Promise<[number, string]> => {
+  try {
+    let [status, message] = await adminModel.adminContext(context);
+    return [status, message];
+  } catch (error) {
+    console.error("Erro ao processar contexto do administrador:", Error);
+    return [500, "Erro interno do servidor"];
+  }
+};
