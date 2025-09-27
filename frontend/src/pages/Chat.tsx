@@ -2,7 +2,9 @@ import { useState } from "react";
 import { fetchChatBot } from "../lib/api/bot/fecthBot.ts";
 import ChatSidebar from "../components/layout/ChatSidebar";
 import Message from "../components/layout/message";
+
 import FormattedMessage from "../components/layout/FormattedMessage";
+
 
 interface ChatMessage {
   id: number;
@@ -12,6 +14,7 @@ interface ChatMessage {
 
 export default function Chat() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 0, type: 'chat', message: 'Olá! Sou o **MedBot**, seu assistente médico virtual.\n\nEnvie uma mensagem para iniciarmos nossa conversa!' }
   ]);

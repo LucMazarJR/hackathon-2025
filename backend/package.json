@@ -1,0 +1,43 @@
+{
+  "name": "hackathon-2025",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@openai/agents": "^0.1.6",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.5.2",
+    "cors": "^2.8.5",
+    "cross-env": "^10.0.0",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "node-addon-api": "^8.5.0",
+    "node-gyp-build": "^4.8.4",
+    "read-file": "^0.2.0",
+    "readfile": "^1.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "cross-env node --watch build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DiegoHenriqueMelo/hackathon-2025.git"
+  },
+  "author": "Davi Muniz,Diego Melo, Luciano Neves e Renan Prado",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DiegoHenriqueMelo/hackathon-2025/issues"
+  },
+  "homepage": "https://github.com/DiegoHenriqueMelo/hackathon-2025#readme",
+  "description": ""
+}
