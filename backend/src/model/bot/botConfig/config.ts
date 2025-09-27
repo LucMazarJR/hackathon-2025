@@ -56,7 +56,9 @@ export let sendMessage = async (
   const response = await run(agent, fullPrompt); // Extrai a mensagem final do assistente da resposta.
   const assistantMessage: any = response.finalOutput; // Adiciona as mensagens do usuário e do assistente ao histórico da sessão.
 
+
   chat.addMessage(message, assistantMessage); // Retorna a resposta do assistente.
+
 
   return assistantMessage;
 };
