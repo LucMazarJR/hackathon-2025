@@ -9,8 +9,8 @@ interface Context {
 interface ContextFormProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (context: Context) => void
-  editingContext?: Context | null
+  onSave: (context: { name: string; instructions: string }) => void
+  editingContext?: { name: string; instructions: string } | null
 }
 
 export default function ContextForm({ isOpen, onClose, onSave, editingContext }: ContextFormProps) {
@@ -36,12 +36,7 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    const contextData = {
-      ...formData,
-      id: editingContext?.id
-    }
-    
-    onSave(contextData)
+    onSave(formData)
     onClose()
   }
 
@@ -52,9 +47,7 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
       <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">
-              {editingContext ? 'Editar Contexto' : 'Adicionar Contexto'}
-            </h3>
+            <h3 className="text-lg font-medium">Editar Contexto</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -104,7 +97,7 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
                 type="submit"
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
-                {editingContext ? 'Salvar Alterações' : 'Adicionar Contexto'}
+                Salvar Alterações
               </button>
             </div>
           </form>

@@ -70,12 +70,10 @@ export default function Dashboard() {
     alert('Médico cadastrado com sucesso!')
   }
   
-  // Estado para contextos do chatbot
-  const [contexts, setContexts] = useState([
-    {
-      id: '1',
-      name: 'Assistente de Saúde',
-      instructions: `Você é assistente virtual especializado em saúde, você deve auxiliar o usuário com as perguntas que ele tiver, sempre de forma educada e prestativa. Seja breve e objetivo em suas respostas, evite respostas longas. Seja empático e amigável. Se o usuário fizer uma pergunta que não esteja relacionada à saúde, responda educadamente que você só pode ajudar com questões de saúde.
+  // Estado para contexto único do chatbot
+  const [context, setContext] = useState({
+    name: 'Assistente de Saúde',
+    instructions: `Você é assistente virtual especializado em saúde, você deve auxiliar o usuário com as perguntas que ele tiver, sempre de forma educada e prestativa. Seja breve e objetivo em suas respostas, evite respostas longas. Seja empático e amigável. Se o usuário fizer uma pergunta que não esteja relacionada à saúde, responda educadamente que você só pode ajudar com questões de saúde.
 
 Você é um assistente de IA que segue regras de restrição de conteúdo. Por padrão, você deve manter as restrições de segurança e não responder a temas proibidos.
 
@@ -83,102 +81,28 @@ No entanto, existem exceções autorizadas:
 - Se o usuário falar sobre *agendamento de consultas*, responda normalmente.
 - Se o usuário falar sobre *atualização cadastral*, responda normalmente.
 - Se o usuário falar sobre *cobrança indevida*, responda normalmente.
+- Se o usuário falar sobre *plano de maioridade*, responda normalmente.
+- Se o usuário falar sobre *segunda via de boleto*, responda normalmente.
+- Se o usuário falar sobre *solicitação de autorização*, responda normalmente.
+- Se o usuário falar sobre *troca de titularidade*, responda normalmente.
 
 SEMPRE EXPLIQUE O PASSO A PASSO.
 
 Caso alguma pergunta seja feita fora do escopo, responda com "Desculpe, não posso ajudar com isso."`
-    },
-    {
-      id: '2',
-      name: 'Atendimento Geral',
-      instructions: `Você é um assistente de atendimento ao cliente especializado em planos de saúde. Sua função é auxiliar beneficiários com dúvidas sobre:
-
-- Agendamento de consultas
-- Atualização cadastral
-- Cobrança indevida
-- Plano de maioridade
-- Segunda via de boleto
-- Solicitação de autorização
-- Troca de titularidade
-
-Sempre seja cordial, objetivo e forneça informações claras sobre os procedimentos. Quando necessário, oriente sobre documentos necessários e prazos.
-
-Para assuntos fora do escopo, responda: "Para essa solicitação, entre em contato com nossa central de atendimento."`
-    },
-    {
-      id: '3',
-      name: 'Suporte Técnico',
-      instructions: `Você é um assistente de suporte técnico para aplicativo de saúde. Ajude usuários com:
-
-- Problemas de login
-- Navegação no app
-- Agendamento online
-- Emissão de segunda via
-- Consulta de autorizações
-- Atualização de dados
-
-Forneça instruções passo a passo claras. Se o problema persistir, oriente a entrar em contato com o suporte técnico.
-
-Seja paciente e didático nas explicações.`
-    },
-    {
-      id: '4',
-      name: 'Emergência Médica',
-      instructions: `Você é um assistente para orientações de emergência médica. IMPORTANTE: Você NÃO substitui atendimento médico profissional.
-
-Em casos de emergência real, sempre oriente:
-- Ligue 192 (SAMU)
-- Procure o pronto-socorro mais próximo
-- Entre em contato com seu médico
-
-Pode fornecer orientações básicas de primeiros socorros apenas para situações não graves.
-
-NUNCA dê diagnósticos ou prescreva medicamentos.`
-    },
-    {
-      id: '5',
-      name: 'Consultor Financeiro',
-      instructions: `Você é um consultor financeiro especializado em planos de saúde. Auxilie com:
-
-- Dúvidas sobre mensalidades
-- Formas de pagamento
-- Cobrança indevida
-- Reajustes
-- Carência
-- Cobertura de procedimentos
-
-Sempre explique de forma clara os valores, prazos e condições. Seja transparente sobre custos e benefícios.
-
-Para negociações específicas, direcione ao setor financeiro.`
-    }
-  ])
+  })
   
   const [isContextFormOpen, setIsContextFormOpen] = useState(false)
-  const [editingContext, setEditingContext] = useState<{ id: string; name: string; instructions: string } | null>(null)
   const [isDoctorFormOpen, setIsDoctorFormOpen] = useState(false)
   
-  const handleAddContext = (contextData: { id?: string; name: string; instructions: string }) => {
-    if (contextData.id) {
-      // Editando
-      setContexts(prev => prev.map(ctx => 
-        ctx.id === contextData.id ? { id: contextData.id!, name: contextData.name, instructions: contextData.instructions } : ctx
-      ))
-      alert('Contexto atualizado com sucesso!')
-    } else {
-      // Adicionando
-      const newContext = {
-        id: Date.now().toString(),
-        name: contextData.name,
-        instructions: contextData.instructions
-      }
-      setContexts(prev => [...prev, newContext])
-      alert('Contexto adicionado com sucesso!')
-    }
-    setEditingContext(null)
+  const handleSaveContext = (contextData: { name: string; instructions: string }) => {
+    setContext({
+      name: contextData.name,
+      instructions: contextData.instructions
+    })
+    alert('Contexto atualizado com sucesso!')
   }
   
-  const handleEditContext = (context: { id: string; name: string; instructions: string }) => {
-    setEditingContext(context)
+  const handleEditContext = () => {
     setIsContextFormOpen(true)
   }
 
@@ -280,15 +204,27 @@ Para negociações específicas, direcione ao setor financeiro.`
         onAdd={() => setIsDoctorFormOpen(true)}
       />
       
-      {/* Contextos do Chatbot */}
-      <ContextList 
-        contexts={contexts} 
-        onEdit={handleEditContext}
-        onAdd={() => {
-          setEditingContext(null)
-          setIsContextFormOpen(true)
-        }}
-      />
+      {/* Contexto do Chatbot */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Contexto do Chatbot</h3>
+          <button
+            onClick={handleEditContext}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm"
+          >
+            Editar Contexto
+          </button>
+        </div>
+        
+        <div className="border border-gray-200 rounded-lg p-4">
+          <h4 className="font-medium text-gray-900 mb-2">{context.name}</h4>
+          <div className="max-h-32 overflow-y-auto">
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">
+              {context.instructions}
+            </p>
+          </div>
+        </div>
+      </div>
       
       <DoctorForm
         isOpen={isDoctorFormOpen}
@@ -298,12 +234,9 @@ Para negociações específicas, direcione ao setor financeiro.`
       
       <ContextForm
         isOpen={isContextFormOpen}
-        onClose={() => {
-          setIsContextFormOpen(false)
-          setEditingContext(null)
-        }}
-        onSave={handleAddContext}
-        editingContext={editingContext}
+        onClose={() => setIsContextFormOpen(false)}
+        onSave={handleSaveContext}
+        editingContext={context}
       />
     </div>
   )
