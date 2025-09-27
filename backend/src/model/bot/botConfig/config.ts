@@ -22,6 +22,7 @@ export let sendMessage = async (message: string, sessionId: string = "default"):
   const assistantMessage: any = response.finalOutput;
   
   chat.addMessage(message, assistantMessage);
+  console.log(fullPrompt)
 
   return assistantMessage;
 };
