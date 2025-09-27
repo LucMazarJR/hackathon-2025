@@ -63,11 +63,9 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
               </label>
               <input
                 type="text"
-                required
+                disabled
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                placeholder="Ex: Assistente de Saúde"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
               />
             </div>
             
