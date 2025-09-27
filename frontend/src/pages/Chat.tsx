@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from 'react-router-dom'
 import { fetchChatBot } from "../lib/api/bot/fecthBot.ts";
 import Message from "../components/layout/message";
@@ -18,15 +18,24 @@ export default function Chat() {
   const location = useLocation()
   const navigate = useNavigate()
   
-  useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/welcome')
-    }
-  }, [isLoggedIn, navigate])
+  // useEffect(() => {
+  //   if (!isLoggedIn) {
+  //     navigate('/welcome')
+  //   }
+  // }, [isLoggedIn, navigate])
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 0, type: 'chat', message: 'Olá! Sou o **MedBot**, seu assistente médico virtual.\n\nEnvie uma mensagem para iniciarmos nossa conversa!' }
   ]);
   const [usrMessage, setUsrMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const handleSendMessage = async () => {
     const userMsg = {
@@ -90,9 +99,9 @@ export default function Chat() {
               </button>
             </div>
             <div className="space-y-2">
-              {location.pathname !== '/profile' && (
-                <a href="/profile" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
-                  Perfil
+              {location.pathname !== '/dashboard' && (
+                <a href="/dashboard" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+                  Dashboard
                 </a>
               )}
               {location.pathname !== '/calendar' && (
@@ -100,9 +109,9 @@ export default function Chat() {
                   Calendário
                 </a>
               )}
-              <button className="w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+              <a href="/profile" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
                 Configurações
-              </button>
+              </a>
             </div>
           </div>
         </>
@@ -122,6 +131,7 @@ export default function Chat() {
               />
             </Message>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
