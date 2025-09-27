@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useUser } from '../contexts/UserContext'
 
 export default function Login() {
+  const { setUserId } = useUser()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -9,8 +12,13 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Fazer login
+    // TODO: Fazer login na API
     console.log('Login:', formData)
+    
+    // Exemplo: após login bem-sucedido
+    const userId = '123' // ID retornado da API
+    setUserId(userId)
+    navigate('/profile')
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

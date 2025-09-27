@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useLocation } from 'react-router-dom'
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from 'react-router-dom'
 import { fetchChatBot } from "../lib/api/bot/fecthBot.ts";
 import Message from "../components/layout/message";
-
 import FormattedMessage from "../components/layout/FormattedMessage";
 import { useMenu } from '../hooks/useMenu'
+import { useUser } from '../contexts/UserContext'
 
 interface ChatMessage {
   id: number;
@@ -14,7 +14,15 @@ interface ChatMessage {
 
 export default function Chat() {
   const { shouldRender, isClosing, isOpening, handleClose, handleOpen } = useMenu()
+  const { isLoggedIn } = useUser()
   const location = useLocation()
+  const navigate = useNavigate()
+  
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/welcome')
+    }
+  }, [isLoggedIn, navigate])
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 0, type: 'chat', message: 'Olá! Sou o **MedBot**, seu assistente médico virtual.\n\nEnvie uma mensagem para iniciarmos nossa conversa!' }
   ]);
