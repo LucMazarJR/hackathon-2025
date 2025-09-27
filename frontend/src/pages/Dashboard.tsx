@@ -61,13 +61,33 @@ export default function Dashboard() {
     }
   ])
   
-  const handleAddDoctor = (doctorData: { name: string; cpf: string; crm: string; specialty: string; email: string }) => {
-    const newDoctor = {
-      ...doctorData,
-      id: Date.now().toString()
+  const handleSaveDoctor = (doctorData: { id?: string; name: string; cpf: string; crm: string; specialty: string; email: string }) => {
+    if (doctorData.id) {
+      // Editando
+      setDoctors(prev => prev.map(doc => 
+        doc.id === doctorData.id ? { ...doctorData, id: doctorData.id } : doc
+      ))
+      alert('Médico atualizado com sucesso!')
+    } else {
+      // Adicionando
+      const newDoctor = {
+        ...doctorData,
+        id: Date.now().toString()
+      }
+      setDoctors(prev => [...prev, newDoctor])
+      alert('Médico cadastrado com sucesso!')
     }
-    setDoctors(prev => [...prev, newDoctor])
-    alert('Médico cadastrado com sucesso!')
+    setEditingDoctor(null)
+  }
+  
+  const handleDeleteDoctor = (doctorId: string) => {
+    setDoctors(prev => prev.filter(doc => doc.id !== doctorId))
+    alert('Médico excluído com sucesso!')
+  }
+  
+  const handleEditDoctor = (doctor: { id: string; name: string; cpf: string; crm: string; specialty: string; email: string }) => {
+    setEditingDoctor(doctor)
+    setIsDoctorFormOpen(true)
   }
   
   // Estado para contexto único do chatbot
@@ -101,6 +121,7 @@ Caso alguma pergunta seja feita fora do escopo, responda com "Desculpe, não pos
   
   const [isContextFormOpen, setIsContextFormOpen] = useState(false)
   const [isDoctorFormOpen, setIsDoctorFormOpen] = useState(false)
+  const [editingDoctor, setEditingDoctor] = useState<{ id: string; name: string; cpf: string; crm: string; specialty: string; email: string } | null>(null)
   
   const handleSaveContext = (contextData: { name: string; instructions: string }) => {
     setContext(contextData)
@@ -211,7 +232,11 @@ Caso alguma pergunta seja feita fora do escopo, responda com "Desculpe, não pos
       {/* Gestão de Médicos */}
       <DoctorList 
         doctors={doctors} 
-        onAdd={() => setIsDoctorFormOpen(true)}
+        onAdd={() => {
+          setEditingDoctor(null)
+          setIsDoctorFormOpen(true)
+        }}
+        onEdit={handleEditDoctor}
       />
       
       {/* Contexto do Chatbot */}
@@ -238,8 +263,13 @@ Caso alguma pergunta seja feita fora do escopo, responda com "Desculpe, não pos
       
       <DoctorForm
         isOpen={isDoctorFormOpen}
-        onClose={() => setIsDoctorFormOpen(false)}
-        onAddDoctor={handleAddDoctor}
+        onClose={() => {
+          setIsDoctorFormOpen(false)
+          setEditingDoctor(null)
+        }}
+        onSave={handleSaveDoctor}
+        onDelete={handleDeleteDoctor}
+        editingDoctor={editingDoctor}
       />
       
       <ContextForm

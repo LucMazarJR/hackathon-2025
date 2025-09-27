@@ -12,9 +12,10 @@ interface Doctor {
 interface DoctorListProps {
   doctors: Doctor[]
   onAdd: () => void
+  onEdit: (doctor: Doctor) => void
 }
 
-export default function DoctorList({ doctors, onAdd }: DoctorListProps) {
+export default function DoctorList({ doctors, onAdd, onEdit }: DoctorListProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   
   const displayedDoctors = isExpanded ? doctors : doctors.slice(0, 3)
@@ -41,6 +42,14 @@ export default function DoctorList({ doctors, onAdd }: DoctorListProps) {
                     <p className="text-sm text-gray-500">CRM: {doctor.crm}</p>
                   </div>
                   <div className="text-right">
+                    <div className="mb-2">
+                      <button
+                        onClick={() => onEdit(doctor)}
+                        className="text-green-600 hover:text-green-700 text-sm font-medium"
+                      >
+                        Editar
+                      </button>
+                    </div>
                     <p className="text-sm text-gray-600">{doctor.email}</p>
                     <p className="text-sm text-gray-500">{doctor.cpf}</p>
                   </div>

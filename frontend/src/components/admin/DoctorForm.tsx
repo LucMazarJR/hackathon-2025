@@ -1,9 +1,20 @@
 import { useState, useEffect } from 'react'
 
+interface Doctor {
+  id?: string
+  name: string
+  cpf: string
+  crm: string
+  specialty: string
+  email: string
+}
+
 interface DoctorFormProps {
   isOpen: boolean
   onClose: () => void
-  onAddDoctor: (doctor: any) => void
+  onSave: (doctor: Doctor) => void
+  onDelete?: (doctorId: string) => void
+  editingDoctor?: Doctor | null
 }
 
 const formatCPF = (value: string) => {
@@ -20,7 +31,7 @@ const validateCPF = (cpf: string) => {
   return numbers.length === 11
 }
 
-export default function DoctorForm({ isOpen, onClose, onAddDoctor }: DoctorFormProps) {
+export default function DoctorForm({ isOpen, onClose, onSave, onDelete, editingDoctor }: DoctorFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
@@ -46,7 +57,15 @@ export default function DoctorForm({ isOpen, onClose, onAddDoctor }: DoctorFormP
   }
 
   useEffect(() => {
-    if (!isOpen) {
+    if (editingDoctor) {
+      setFormData({
+        name: editingDoctor.name,
+        cpf: editingDoctor.cpf,
+        crm: editingDoctor.crm,
+        specialty: editingDoctor.specialty,
+        email: editingDoctor.email
+      })
+    } else {
       setFormData({
         name: '',
         cpf: '',
@@ -55,7 +74,7 @@ export default function DoctorForm({ isOpen, onClose, onAddDoctor }: DoctorFormP
         email: ''
       })
     }
-  }, [isOpen])
+  }, [editingDoctor, isOpen])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,8 +84,22 @@ export default function DoctorForm({ isOpen, onClose, onAddDoctor }: DoctorFormP
       return
     }
     
-    onAddDoctor(formData)
+    const doctorData = {
+      ...formData,
+      id: editingDoctor?.id
+    }
+    
+    onSave(doctorData)
     onClose()
+  }
+  
+  const handleDelete = () => {
+    if (editingDoctor?.id && onDelete) {
+      if (confirm('Tem certeza que deseja excluir este médico?')) {
+        onDelete(editingDoctor.id)
+        onClose()
+      }
+    }
   }
 
   if (!isOpen) return null
@@ -76,7 +109,9 @@ export default function DoctorForm({ isOpen, onClose, onAddDoctor }: DoctorFormP
       <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Cadastrar Médico</h3>
+            <h3 className="text-lg font-medium">
+              {editingDoctor ? 'Editar Médico' : 'Cadastrar Médico'}
+            </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -158,20 +193,32 @@ export default function DoctorForm({ isOpen, onClose, onAddDoctor }: DoctorFormP
           </div>
         </div>
         
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-              >
-                Cadastrar Médico
-              </button>
+            <div className="flex justify-between items-center pt-4">
+              {editingDoctor && onDelete && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Excluir
+                </button>
+              )}
+              
+              <div className={`flex space-x-3 ${!editingDoctor ? 'w-full justify-end' : ''}`}>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                >
+                  {editingDoctor ? 'Salvar Alterações' : 'Cadastrar Médico'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
