@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom'
 import { useMenu } from '../hooks/useMenu'
 import { useUser } from '../contexts/UserContext'
 import DoctorForm from '../components/admin/DoctorForm'
-import DoctorList from '../components/admin/DoctorList'
 import ContextForm from '../components/admin/ContextForm'
 import {fetchContext} from "../lib/api/adm/fetchBotContext.js"
 import { getDoctors, createDoctor, updateDoctor, deleteDoctor, type Doctor } from '../lib/api/admin/doctorsApi'

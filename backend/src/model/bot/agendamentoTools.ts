@@ -7,6 +7,9 @@ import {
   obterMedicoPorId,
   listarEspecialidades,
   listarCidades,
+  buscarConsultasMedico,
+  buscarConsultasPaciente,
+  buscarProcedimento,
   Medico
 } from "../../database/bot/agendamento.js";
 
@@ -34,18 +37,16 @@ export const buscarMedicosDisponiveis = tool({
         description: "Cidade onde deseja a consulta"
       }
     },
-    required: [],
+    required: ["especialidade"],
     additionalProperties: false
   },
   execute: async ({ especialidade, cidade }: any) => {
     let medicos: Medico[] = [];
     
-    if (especialidade && cidade) {
+    if (cidade) {
       medicos = buscarMedicosPorEspecialidade(especialidade, cidade);
-    } else if (especialidade) {
+    } else {
       medicos = buscarMedicosPorEspecialidade(especialidade);
-    } else if (cidade) {
-      medicos = buscarMedicosPorCidade(cidade);
     }
 
     if (medicos.length === 0) {
@@ -217,5 +218,131 @@ export const listarCidadesDisponiveis = tool({
   execute: async () => {
     const cidades = listarCidades();
     return `Cidades disponíveis:\n${cidades.map(cidade => `• ${cidade}`).join("\n")}`;
+  }
+});
+
+// Tool para consultar agendamentos do médico
+export const consultarAgendamentosMedico = tool({
+  name: "consultar_agendamentos_medico",
+  description: "Consulta os agendamentos de um médico (próximas consultas e todas agendadas)",
+  parameters: {
+    type: "object",
+    properties: {
+      medicoId: {
+        type: "number",
+        description: "ID do médico"
+      },
+      periodo: {
+        type: "string",
+        enum: ["proximas", "todas"],
+        description: "Período das consultas: 'proximas' (próximos 7 dias) ou 'todas' (todas agendadas)"
+      }
+    },
+    required: ["medicoId"],
+    additionalProperties: false
+  },
+  execute: async ({ medicoId, periodo = "proximas" }: any) => {
+    const consultas = buscarConsultasMedico(medicoId, periodo);
+    
+    if (consultas.length === 0) {
+      return periodo === "proximas" 
+        ? "Você não tem consultas agendadas para os próximos 7 dias."
+        : "Você não tem consultas agendadas.";
+    }
+
+    const titulo = periodo === "proximas" 
+      ? "📅 Suas próximas consultas (7 dias):"
+      : "📋 Todas suas consultas agendadas:";
+
+    return titulo + "\n\n" + consultas.map(consulta => 
+      `🗓️ ${consulta.data} às ${consulta.horario}\n` +
+      `👤 Paciente: ${consulta.paciente}\n` +
+      `📋 Protocolo: ${consulta.protocolo}\n` +
+      `📍 Status: ${consulta.status}\n`
+    ).join("\n") + "\n\n💡 Acesse o calendário do sistema para mais detalhes.";
+  }
+});
+
+// Tool para consultar agendamentos do paciente
+export const consultarAgendamentosPaciente = tool({
+  name: "consultar_agendamentos_paciente",
+  description: "Consulta os agendamentos de um paciente (próximas consultas e histórico)",
+  parameters: {
+    type: "object",
+    properties: {
+      cpfPaciente: {
+        type: "string",
+        description: "CPF do paciente"
+      },
+      periodo: {
+        type: "string",
+        enum: ["proximas", "todas"],
+        description: "Período das consultas: 'proximas' (próximos 7 dias) ou 'todas' (histórico completo)"
+      }
+    },
+    required: ["cpfPaciente"],
+    additionalProperties: false
+  },
+  execute: async ({ cpfPaciente, periodo = "proximas" }: any) => {
+    const consultas = buscarConsultasPaciente(cpfPaciente, periodo);
+    
+    if (consultas.length === 0) {
+      return periodo === "proximas" 
+        ? "Você não tem consultas agendadas para os próximos 7 dias."
+        : "Você não tem consultas no histórico.";
+    }
+
+    const titulo = periodo === "proximas" 
+      ? "📅 Suas próximas consultas (7 dias):"
+      : "📋 Seu histórico de consultas:";
+
+    return titulo + "\n\n" + consultas.map(consulta => 
+      `🗓️ ${consulta.data} às ${consulta.horario}\n` +
+      `👨⚕️ Médico: ${consulta.medico}\n` +
+      `🏥 Especialidade: ${consulta.especialidade}\n` +
+      `📋 Protocolo: ${consulta.protocolo}\n` +
+      `📍 Status: ${consulta.status}\n`
+    ).join("\n") + "\n\n💡 Acesse o calendário do sistema para visualização completa.";
+  }
+});
+
+// Tool para verificar procedimentos médicos
+export const verificarProcedimento = tool({
+  name: "verificar_procedimento",
+  description: "Verifica se um procedimento/exame é coberto pelo plano e qual tipo de auditoria precisa",
+  parameters: {
+    type: "object",
+    properties: {
+      nomeProcedimento: {
+        type: "string",
+        description: "Nome do procedimento ou exame solicitado"
+      }
+    },
+    required: ["nomeProcedimento"],
+    additionalProperties: false
+  },
+  execute: async ({ nomeProcedimento }: any) => {
+    const procedimento = buscarProcedimento(nomeProcedimento);
+    
+    if (!procedimento) {
+      const protocolo = `PROC${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      return `❌ Procedimento "${nomeProcedimento}": Não coberto pelo plano\n📋 Protocolo: ${protocolo}`;
+    }
+
+    const protocolo = `PROC${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    
+    switch (procedimento.tipo) {
+      case "Sem Auditoria":
+        return `✅ Procedimento "${nomeProcedimento}": Autorizado imediatamente\n📋 Protocolo: ${protocolo}`;
+      
+      case "Auditoria":
+        return `🔍 Procedimento "${nomeProcedimento}": Precisa de auditoria, prazo 5 dias úteis\n📋 Protocolo: ${protocolo}\n📱 Acompanhe pelo app/WhatsApp`;
+      
+      case "OPME":
+        return `🏥 Procedimento "${nomeProcedimento}": Precisa de auditoria OPME, prazo 10 dias úteis\n📋 Protocolo: ${protocolo}\n📱 Acompanhe pelo app/WhatsApp`;
+      
+      default:
+        return `❌ Procedimento "${nomeProcedimento}": Tipo de auditoria não reconhecido\n📋 Protocolo: ${protocolo}`;
+    }
   }
 });

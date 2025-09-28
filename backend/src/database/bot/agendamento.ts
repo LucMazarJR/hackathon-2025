@@ -119,3 +119,85 @@ export const listarEspecialidades = (): string[] => {
 export const listarCidades = (): string[] => {
   return [...new Set(medicos.map(medico => medico.cidade))];
 };
+
+// Interface para procedimentos
+export interface Procedimento {
+  nome_procedimento: string;
+  tipo: 'Sem Auditoria' | 'Auditoria' | 'OPME';
+}
+
+// Banco de dados simulado de procedimentos
+const procedimentos: Procedimento[] = [
+  { nome_procedimento: "Consulta médica", tipo: "Sem Auditoria" },
+  { nome_procedimento: "Hemograma completo", tipo: "Sem Auditoria" },
+  { nome_procedimento: "Raio-X tórax", tipo: "Sem Auditoria" },
+  { nome_procedimento: "Ultrassonografia abdominal", tipo: "Auditoria" },
+  { nome_procedimento: "Tomografia computadorizada", tipo: "Auditoria" },
+  { nome_procedimento: "Ressonância magnética", tipo: "Auditoria" },
+  { nome_procedimento: "Cirurgia de catarata", tipo: "Auditoria" },
+  { nome_procedimento: "Angioplastia", tipo: "OPME" },
+  { nome_procedimento: "Marca-passo", tipo: "OPME" },
+  { nome_procedimento: "Prótese de quadril", tipo: "OPME" },
+  { nome_procedimento: "Stent coronariano", tipo: "OPME" }
+];
+
+// Função para buscar procedimento por nome
+export const buscarProcedimento = (nomeProcedimento: string): Procedimento | undefined => {
+  return procedimentos.find(proc => 
+    proc.nome_procedimento.toLowerCase().includes(nomeProcedimento.toLowerCase())
+  );
+};
+
+// Função para buscar consultas de um médico
+export const buscarConsultasMedico = (medicoId: number, periodo: string = "proximas") => {
+  const hoje = new Date();
+  const seteDiasDepois = new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
+  
+  let consultasFiltradas = agendamentos.filter(ag => 
+    ag.medicoId === medicoId && ag.status === 'agendado'
+  );
+  
+  if (periodo === "proximas") {
+    consultasFiltradas = consultasFiltradas.filter(ag => {
+      const dataConsulta = new Date(ag.data);
+      return dataConsulta >= hoje && dataConsulta <= seteDiasDepois;
+    });
+  }
+  
+  return consultasFiltradas.map(ag => ({
+    data: ag.data,
+    horario: ag.horario,
+    paciente: ag.paciente,
+    protocolo: ag.protocolo,
+    status: ag.status
+  })).sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+};
+
+// Função para buscar consultas de um paciente
+export const buscarConsultasPaciente = (cpfPaciente: string, periodo: string = "proximas") => {
+  const hoje = new Date();
+  const seteDiasDepois = new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
+  
+  let consultasFiltradas = agendamentos.filter(ag => 
+    ag.paciente.toLowerCase().includes(cpfPaciente.toLowerCase()) && ag.status === 'agendado'
+  );
+  
+  if (periodo === "proximas") {
+    consultasFiltradas = consultasFiltradas.filter(ag => {
+      const dataConsulta = new Date(ag.data);
+      return dataConsulta >= hoje && dataConsulta <= seteDiasDepois;
+    });
+  }
+  
+  return consultasFiltradas.map(ag => {
+    const medico = obterMedicoPorId(ag.medicoId);
+    return {
+      data: ag.data,
+      horario: ag.horario,
+      medico: medico?.nome || 'Médico não encontrado',
+      especialidade: medico?.especialidade || 'N/A',
+      protocolo: ag.protocolo,
+      status: ag.status
+    };
+  }).sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+};

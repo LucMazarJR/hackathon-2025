@@ -13,7 +13,7 @@ export default function Home() {
           Assistente inteligente para agendamentos, consulta de exames e suporte a processos médicos.
         </p>
         <NavButton
-          className="w-full tablet:w-auto bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors"
+          className="w-full tablet:w-auto bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors shadow-lg"
           path="/welcome"
         >
           Começar Agora
@@ -61,9 +61,6 @@ export default function Home() {
           <p className="text-gray-600 mb-8">
             Experimente nosso assistente inteligente e simplifique seus processos médicos.
           </p>
-          <button className="w-full tablet:w-auto bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors">
-            Acessar Chat
-          </button>
         </div>
       </section>
     </div>

@@ -25,7 +25,9 @@ export let messageBotController = async (
   sessionId: string = "default"
 ): Promise<[number, string]> => {
   try {
+    console.log("BotController recebeu mensagem:", message);
     const response = await sendMessage(message, sessionId);
+    console.log("BotController enviando resposta:", response);
     return [200, response];
   } catch (error) {
     console.error("Erro ao processar mensagem no botController:", error);

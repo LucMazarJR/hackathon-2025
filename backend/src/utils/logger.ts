@@ -111,15 +111,33 @@ export const connectServer = async (PORT: number) => {
     }
   });
 
+  // ROTA DE TESTE DO BOT
+  app.get("/bot/test", async (req, res) => {
+    try {
+      return res.status(200).json({ 
+        message: "Bot está funcionando", 
+        openai_key_configured: !!process.env.OPENAI_API_KEY,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Erro no teste do bot:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // ROTA BOT
   app.post(routerBot.bot, async (req, res) => {
     const { message } = req.body;
     const { id } = req.params;
+    
+    console.log("Rota bot recebeu:", { message, id });
+    
     try {
       let [status, messageBot] = await botController.messageBotController(
         message,
         id
       );
+      console.log("Rota bot retornando:", { status, messageBot });
       return res.status(status).json({ message: messageBot });
     } catch (error) {
       console.error("Erro ao processar mensagem:", error);

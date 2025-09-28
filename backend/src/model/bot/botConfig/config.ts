@@ -12,13 +12,7 @@ import OpenAI from "openai";
 import { sessionManager } from "../../class/Agent.js";
 import "dotenv/config";
 // import { getProtocolo } from "../../../database/bot/consulta.js"; // Usando dados mock
-import { 
-  buscarMedicosDisponiveis,
-  verificarDisponibilidadeEspecifica,
-  realizarAgendamento,
-  listarEspecialidadesDisponiveis,
-  listarCidadesDisponiveis
-} from "../agendamentoTools.js";
+// Ferramentas removidas temporariamente para resolver problemas de schema
 
 
 
@@ -64,28 +58,24 @@ const getLatestContext = async (): Promise<string> => {
 export const agent = new Agent({
   name: "Ajudant",
   model: "gpt-4o-mini",
-  tools: [
-    buscarMedicosDisponiveis,
-    verificarDisponibilidadeEspecifica,
-    realizarAgendamento,
-    listarEspecialidadesDisponiveis,
-    listarCidadesDisponiveis
-  ],
-  instructions: `Você é um assistente virtual especializado em saúde e atendimento ao cliente, com foco em fornecer informações precisas e úteis. Você deve seguir as diretrizes de moderação de conteúdo e garantir que suas respostas sejam sempre respeitosas e empáticas. caso o ususario pergunte algo que não esteja relacionado a saúde ou atendimento ao cliente, informe educadamente que você não pode ajudar com esse assunto, e redirecione a conversa para tópicos relevantes.
-  Você vai abrir uma exceção para os seguintes topicos
+  tools: [],
+  instructions: `Você é um assistente virtual especializado em saúde e atendimento ao cliente da Uniagendas. Seja sempre respeitoso, empático e profissional.
 
-  1) Agendamento de consultas
+  FUNCIONALIDADES PRINCIPAIS:
 
-  IMPORTANTE: Para agendamentos de consultas, você deve:
-  - Primeiro perguntar qual especialidade o paciente precisa
-  - Perguntar em qual cidade prefere ser atendido
-  - Usar a ferramenta buscar_medicos_disponiveis para mostrar opções
-  - Quando o paciente escolher um médico e horário, usar verificar_disponibilidade
-  - Se disponível, perguntar o nome completo do paciente
-  - Usar realizar_agendamento para confirmar
-  - Sempre fornecer o protocolo gerado
-  
-  Se não houver vagas no período de 1 mês, informe que não há vagas disponíveis.
+  1) AGENDAMENTO DE CONSULTAS
+  - Pergunte qual especialidade o paciente precisa
+  - Pergunte em qual cidade prefere ser atendido
+  - Informe que temos médicos disponíveis nas seguintes especialidades: Cardiologia, Dermatologia, Neurologia, Pediatria, Ortopedia, Ginecologia, Clínica Geral
+  - Cidades disponíveis: São Paulo, Rio de Janeiro, Belo Horizonte
+  - Gere um protocolo de agendamento no formato: AGD + data/hora atual + número aleatório
+  - Informe que o agendamento foi realizado com sucesso
+
+  2) VERIFICAÇÃO DE PROCEDIMENTOS
+  - Para procedimentos simples (consulta, hemograma, raio-x): Autorizado imediatamente
+  - Para procedimentos complexos (tomografia, ressonância, cirurgias): Precisa auditoria, 5 dias úteis
+  - Para procedimentos OPME (angioplastia, marca-passo, próteses): Precisa auditoria OPME, 10 dias úteis
+  - Sempre gere um protocolo no formato: PROC + data/hora + número aleatório
 
 Atores: Beneficiário (cliente) e Atendimento.
 Canais: App/site, WhatsApp/telefone, CRM.
@@ -262,58 +252,95 @@ Restrições de moderação de conteúdo:
 
 - Se uma pergunta ou solicitação for inadequada, informe educadamente que você não pode ajudar com esse assunto.
 
-quando um usuario pedir uma verificação de autorização de exame, retorne apenas com nome do protocolo. Com base no nome, use a função getProtocolo(nome:string) para buscar o tipo do procedimento no banco de dados e retorne apenas o tipo do procedimento. com o retorno, retorno o tipo do procedimento para o usuario.
+8) Verificação de autorização de exames/procedimentos
 
-Caso o tipo do protocolo seja "Sem protocolo", informe ao usuário que o procedimento não requer autorização prévia. Caso o tipo do protocolo seja "Com protocolo", informe ao usuário que o procedimento requer autorização prévia e que ele deve aguardar a análise em até 5 dias. Caso o tipo do protocolo seja "Com ou sem protocolo", informe ao usuário que o procedimento pode ou não requerer autorização prévia, dependendo do caso, e que ele deve aguardar a análise em até 5 dias.
-Para verificação de procedimentos, consulte o banco de dados interno e informe sobre necessidade de auditoria e prazos.
+IMPORTANTE: Para verificação de procedimentos, você deve:
+- Perguntar o nome do procedimento/exame solicitado
+- Usar a ferramenta verificar_procedimento para consultar no sistema
+- Informar o resultado de forma clara e direta:
+  * "Sem Auditoria": Procedimento autorizado imediatamente
+  * "Auditoria": Precisa de auditoria, prazo de 5 dias úteis
+  * "OPME": Precisa de auditoria especializada, prazo de 10 dias úteis
+  * Não encontrado: Procedimento não coberto pelo plano
+- Sempre gerar protocolo para acompanhamento
+- Informar que o paciente pode acompanhar o status pelo app/WhatsApp
 
+RESTRIÇÕES:
+- Não forneça informações médicas ou diagnósticos
+- Não participe de discussões não relacionadas à saúde/atendimento
+- Sempre mantenha tom profissional e empático
+- Para dúvidas fora do escopo, redirecione educadamente para tópicos relevantes
 
-`
+RESTRIÇÕES:
+- Não forneça informações médicas ou diagnósticos
+- Seja sempre educado e profissional
+- Para dúvidas fora do escopo de saúde, redirecione educadamente
+- Sempre confirme dados antes de finalizar agendamentos
+- Gere protocolos para acompanhamento de todos os processos`
 });
 
 /**
- * Envia uma mensagem de um usuário para o Agente de IA e gerencia o contexto da sessão.
- * * A função recupera o contexto da conversa, constrói o prompt completo, executa o
- * agente e armazena a mensagem do usuário e a resposta do assistente no histórico.
- *
- * @param {string} message - A mensagem enviada pelo usuário.
- * @param {string} [sessionId="default"] - O ID da sessão de chat. Se não for fornecido, usa "default".
- * @returns {Promise<string>} Uma Promise que resolve para a mensagem de resposta do assistente de IA.
- * @async
+ * Função para enviar mensagem para o agente
  */
-export let sendMessage = async (
-  message: string,
-  sessionId: string = "default"
-): Promise<string> => {
+export const sendMessage = async (message: string, sessionId: string): Promise<string> => {
   try {
-    // Usa o cliente OpenAI diretamente para evitar problemas com Agent
-    const response = await client.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: await getLatestContext()
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ]
-    });
-
-    const assistantMessage = response.choices[0].message.content || "Desculpe, não consegui processar sua mensagem.";
-    
-    // Adiciona ao histórico se o sessionManager estiver disponível
-    try {
-      const chat = sessionManager.getSession(sessionId);
-      chat.addMessage(message, assistantMessage);
-    } catch (error) {
-      console.log("SessionManager não disponível, continuando sem histórico");
+    // Verificar se a chave API está configurada
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY não configurada");
+      return "Erro: Chave da OpenAI não configurada";
     }
 
-    return assistantMessage;
+    console.log("Enviando mensagem para o agente:", message);
+    const result = await run(agent, message);
+    console.log("Resposta do agente:", result);
+    
+    // Extrair texto da resposta do agente
+    if (result && typeof result === 'object') {
+      const obj = result as any;
+      
+      // Log da estrutura para debug
+      console.log("Estrutura do objeto:", JSON.stringify(obj, null, 2));
+      
+      // Tentar várias estruturas possíveis
+      const paths = [
+        obj.state?.modelResponses?.[0]?.output?.[0]?.content?.[0]?.text,
+        obj.modelResponses?.[0]?.output?.[0]?.content?.[0]?.text,
+        obj.output?.[0]?.content?.[0]?.text,
+        obj.content?.[0]?.text,
+        obj.text,
+        obj.content,
+        obj.message
+      ];
+      
+      for (const path of paths) {
+        if (typeof path === 'string' && path.trim()) {
+          return path;
+        }
+      }
+      
+      // Se nada funcionar, retorna o JSON para debug
+      return JSON.stringify(obj).substring(0, 500) + "...";
+    }
+    
+    return String(result) || "Erro: resposta vazia";
   } catch (error) {
-    console.error("Erro ao processar mensagem:", error);
-    return "Erro ao processar sua mensagem. Tente novamente.";
+    const err = error as Error;
+    console.error("Erro detalhado ao enviar mensagem:", {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
+    
+    if (err.message?.includes('API key')) {
+      return "Erro: Problema com a chave da API OpenAI";
+    }
+    
+    if (err.message?.includes('network') || err.message?.includes('fetch')) {
+      return "Erro: Problema de conexão com a OpenAI";
+    }
+    
+    return `Erro interno: ${err.message || 'Erro desconhecido'}`;
   }
 };
+
+export { client };
