@@ -29,6 +29,7 @@ export default function Chat() {
   const [usrMessage, setUsrMessage] = useState("");
   const [showDocumentMenu, setShowDocumentMenu] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -42,6 +43,7 @@ export default function Chat() {
 
   const handleSendMessage = async () => {
     if (!usrMessage.trim() && !selectedFile) return;
+    if (isLoading) return;
     
     let messageContent = usrMessage;
     if (selectedFile) {
@@ -55,10 +57,19 @@ export default function Chat() {
     };
     setMessages((prev) => [...prev, userMsg]);
     
+    // Adiciona mensagem de loading
+    const loadingMsg = {
+      id: messages.length + 2,
+      type: "chat" as const,
+      message: "loading",
+    };
+    setMessages((prev) => [...prev, loadingMsg]);
+    
     const currentMessage = usrMessage;
     const currentFile = selectedFile;
     setUsrMessage("");
     setSelectedFile(null);
+    setIsLoading(true);
 
     try {
       let botResponse;
@@ -68,41 +79,49 @@ export default function Chat() {
         botResponse = await fetchChatBot(currentMessage);
       }
       
-      const botMsg = {
-        id: messages.length + 2,
-        type: "chat" as const,
-        message: botResponse.message,
-      };
+      // Remove mensagem de loading e adiciona resposta
       setMessages((prev) => {
-        const updatedMessages = [...prev, botMsg];
+        const withoutLoading = prev.slice(0, -1);
+        const botMsg = {
+          id: messages.length + 2,
+          type: "chat" as const,
+          message: botResponse.message,
+        };
+        const updatedMessages = [...withoutLoading, botMsg];
         localStorage.setItem("messages", JSON.stringify(updatedMessages));
         return updatedMessages;
       });
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
-      const errorMsg = {
-        id: messages.length + 2,
-        type: "chat" as const,
-        message: "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      // Remove loading e adiciona erro
+      setMessages((prev) => {
+        const withoutLoading = prev.slice(0, -1);
+        const errorMsg = {
+          id: messages.length + 2,
+          type: "chat" as const,
+          message: "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
+        };
+        return [...withoutLoading, errorMsg];
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* Header with Menu Button */}
-      <header className="px-4 bg-white border-b flex-shrink-0">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between h-16 items-center">
+      <header className="px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl lg:max-w-6xl mx-auto">
+          <div className="flex justify-between items-center h-16">
             <button
               onClick={handleOpen}
-              className="w-10 h-10 bg-green-600 text-white rounded-full shadow hover:bg-green-700 transition-colors flex items-center justify-center"
+              className="w-10 h-10 lg:w-12 lg:h-12 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 hover:shadow-xl transition-all flex items-center justify-center"
             >
-              <span className="text-sm">☰</span>
+              <span className="text-sm lg:text-base">☰</span>
             </button>
-            <h1 className="text-xl font-semibold text-gray-900">Chat</h1>
-            <div className="w-10"></div>
+            <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
+            <div className="w-10 lg:w-12"></div>
           </div>
         </div>
       </header>
@@ -148,8 +167,8 @@ export default function Chat() {
       )}
 
       {/* Messages Area - Scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
+        <div className="max-w-4xl lg:max-w-6xl mx-auto space-y-4">
           {messages.map((msg) => (
             <Message
               key={msg.id}
@@ -166,8 +185,8 @@ export default function Chat() {
       </div>
 
       {/* Input Area - Fixed at bottom */}
-      <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
-        <div className="max-w-4xl mx-auto">
+      <div className="border-t border-gray-200 p-4 lg:p-6 bg-white flex-shrink-0">
+        <div className="max-w-4xl lg:max-w-6xl mx-auto">
           {selectedFile && (
             <div className="mb-3 flex items-center justify-between bg-blue-50 p-2 rounded-lg">
               <div className="flex items-center gap-2">
@@ -183,7 +202,7 @@ export default function Chat() {
             </div>
           )}
           
-          <div className="flex gap-2 items-start">
+          <div className="flex gap-3 lg:gap-4 items-start">
             <div className="flex-1 relative">
               <textarea
                 placeholder="Digite sua mensagem..."
@@ -195,7 +214,7 @@ export default function Chat() {
                     handleSendMessage()
                   }
                 }}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none min-h-[48px] max-h-32"
+                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none min-h-[48px] max-h-32 lg:text-base"
                 rows={1}
               />
               <div className="absolute right-2 top-3">
@@ -224,8 +243,8 @@ export default function Chat() {
             </div>
             <button
               onClick={handleSendMessage}
-              disabled={!usrMessage.trim() && !selectedFile}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={(!usrMessage.trim() && !selectedFile) || isLoading}
+              className="bg-green-600 text-white px-6 py-3 lg:px-8 lg:py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed lg:text-base"
             >
               Enviar
             </button>
