@@ -15,6 +15,7 @@ export interface Doctor {
   especialidade?: string;
   dt_nascimento?: string;
   dt_cadastro?: string;
+  senha?: string;
   agenda_status?: 'disponivel' | 'cheia';
 }
 
@@ -46,6 +47,8 @@ export const getDoctors = async () => {
  */
 export const createDoctor = async (doctorData: Doctor) => {
   try {
+    console.log('Enviando dados para API:', doctorData);
+    
     const response = await fetch(`${API_BASE_URL}/admin/doctors`, {
       method: 'POST',
       headers: {
@@ -55,6 +58,12 @@ export const createDoctor = async (doctorData: Doctor) => {
     });
 
     const result = await response.json();
+    
+    console.log('Resposta da API:', {
+      status: response.status,
+      ok: response.ok,
+      data: result
+    });
     
     return {
       success: response.ok,

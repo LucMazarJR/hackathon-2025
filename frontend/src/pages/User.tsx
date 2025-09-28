@@ -69,6 +69,7 @@ export default function User() {
   const [isDoctorFormOpen, setIsDoctorFormOpen] = useState(false)
   const [editingDoctor, setEditingDoctor] = useState<LocalDoctor | null>(null)
   const [contextModalValue, setContextModalValue] = useState(context)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   // Buscar contexto e médicos do banco ao carregar página
   useEffect(() => {
@@ -114,17 +115,33 @@ export default function User() {
     try {
       // Converte LocalDoctor para Doctor da API
       const [nome, ...sobrenomeParts] = doctorData.name.split(' ');
-      const sobrenome = sobrenomeParts.join(' ');
+      const sobrenome = sobrenomeParts.join(' ') || nome; // Fallback se não tiver sobrenome
       const [crm_registro, crm_uf] = doctorData.crm.split('-');
+      
+      // Mapear especialidade para ID
+      const especialidadeMap: { [key: string]: number } = {
+        'Cardiologia': 1,
+        'Dermatologia': 2,
+        'Neurologia': 3,
+        'Pediatria': 4,
+        'Ortopedia': 5,
+        'Ginecologia': 6,
+        'Clínica Geral': 7
+      };
       
       const apiDoctorData: Doctor = {
         nome,
         sobrenome,
-        cpf: doctorData.cpf,
+        cpf: doctorData.cpf.replace(/\D/g, ''), // Remove formatação do CPF
         crm_registro,
         crm_uf,
-        id_especializacao: 1 // Padrão
+        id_especializacao: especialidadeMap[doctorData.specialty] || 7, // Padrão: Clínica Geral
+        dt_nascimento: '1990-01-01', // Data padrão
+        dt_cadastro: new Date().toISOString().split('T')[0], // Data atual
+        senha: '123456' // Senha padrão
       };
+      
+      console.log('Dados enviados para API:', apiDoctorData);
 
       if (doctorData.id) {
         // Atualizar médico existente
@@ -143,6 +160,9 @@ export default function User() {
             }));
             setDoctors(convertedDoctors);
           }
+        } else {
+          console.error('Erro ao atualizar médico:', result.data);
+          alert(`Erro ao atualizar médico: ${result.data.message || 'Erro desconhecido'}`);
         }
       } else {
         // Criar novo médico
@@ -161,11 +181,15 @@ export default function User() {
             }));
             setDoctors(convertedDoctors);
           }
+        } else {
+          console.error('Erro ao criar médico:', result.data);
+          alert(`Erro ao criar médico: ${result.data.message || 'Erro desconhecido'}`);
         }
       }
       setEditingDoctor(null);
     } catch (error) {
       console.error('Erro ao salvar médico:', error);
+      alert('Erro de conexão ao salvar médico');
     }
   }
 
@@ -265,7 +289,10 @@ export default function User() {
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Gerenciar Médicos</h3>
+          <div>
+            <h3 className="text-lg font-medium">Médicos Cadastrados</h3>
+            <span className="text-sm text-gray-600">{doctors.length} total</span>
+          </div>
           <button
             onClick={() => {
               setEditingDoctor(null)
@@ -276,16 +303,51 @@ export default function User() {
             + Cadastrar Médico
           </button>
         </div>
+        
+        {doctors.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">Nenhum médico cadastrado</p>
+        ) : (
+          <div className="space-y-4">
+            <div className={`space-y-4 ${isExpanded ? 'max-h-96 overflow-y-auto hover:overflow-y-scroll' : ''}`}>
+              {(isExpanded ? doctors : doctors.slice(0, 3)).map((doctor) => (
+                <div key={doctor.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">{doctor.name}</h4>
+                      <p className="text-sm text-gray-600">{doctor.specialty}</p>
+                      <p className="text-sm text-gray-500">CRM: {doctor.crm}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="mb-2">
+                        <button
+                          onClick={() => handleEditDoctor(doctor)}
+                          className="text-green-600 hover:text-green-700 text-sm font-medium"
+                        >
+                          Editar
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600">{doctor.email}</p>
+                      <p className="text-sm text-gray-500">{doctor.cpf}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {doctors.length > 3 && (
+              <div className="text-center pt-4 border-t border-gray-200">
+                <button 
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-green-600 hover:text-green-700 text-sm font-medium"
+                >
+                  {isExpanded ? 'Ver menos' : `Ver todos os ${doctors.length} médicos`}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
-      <DoctorList 
-        doctors={doctors} 
-        onAdd={() => {
-          setEditingDoctor(null)
-          setIsDoctorFormOpen(true)
-        }}
-        onEdit={handleEditDoctor}
-      />
       
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
@@ -341,6 +403,7 @@ export default function User() {
           setEditingDoctor(null)
         }}
         onSave={(doctor) => {
+          console.log('Dados do formulário:', doctor);
           const localDoctor: LocalDoctor = {
             id: doctor.id || '',
             name: doctor.name,
