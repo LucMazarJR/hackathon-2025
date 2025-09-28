@@ -19,11 +19,7 @@ export default function Welcome() {
       
       const result = await response.json()
       
-      if (result.exists) {
-        navigate(`/login?email=${encodeURIComponent(email)}`)
-      } else {
-        navigate(`/register?email=${encodeURIComponent(email)}`)
-      }
+      navigate(result.exists ? `/login?email=${encodeURIComponent(email)}` : `/register?email=${encodeURIComponent(email)}`)
     } catch (error) {
       console.error('Erro ao verificar email:', error)
       alert('Erro de conexão')

@@ -1,6 +1,16 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
+interface User {
+  id: number
+  name: string
+  email: string
+  cpf: string
+  user_type: 'patient' | 'doctor' | 'admin'
+}
+
 interface UserContextType {
+  user: User | null
+  setUser: (user: User | null) => void
   userId: string | null
   setUserId: (id: string | null) => void
   isLoggedIn: boolean
@@ -13,14 +23,13 @@ interface UserProviderProps {
 }
 
 export function UserProvider({ children }: UserProviderProps) {
-  const [userId, setUserId] = useState<string | null>(() => {
+  const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('user')
     const savedLoginStatus = localStorage.getItem('isLoggedIn')
     
     if (savedUser && savedLoginStatus === 'true') {
       try {
-        const user = JSON.parse(savedUser)
-        return user.id.toString()
+        return JSON.parse(savedUser)
       } catch {
         return null
       }
@@ -28,18 +37,28 @@ export function UserProvider({ children }: UserProviderProps) {
     return null
   })
 
+  const [userId, setUserId] = useState<string | null>(() => {
+    return user ? user.id.toString() : null
+  })
+
   useEffect(() => {
-    if (userId) {
-      localStorage.setItem('userId', userId)
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.setItem('isLoggedIn', 'true')
+      setUserId(user.id.toString())
     } else {
-      localStorage.removeItem('userId')
+      localStorage.removeItem('user')
+      localStorage.removeItem('isLoggedIn')
+      setUserId(null)
     }
-  }, [userId])
+  }, [user])
 
   const value = {
+    user,
+    setUser,
     userId,
     setUserId,
-    isLoggedIn: userId !== null
+    isLoggedIn: user !== null
   }
 
   return (

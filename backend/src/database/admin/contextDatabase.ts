@@ -22,16 +22,18 @@ export const getCurrentContext = async (): Promise<BotContext | null> => {
     );
     
     if (result.rows.length === 0) {
-      return null;
+      return {
+        name: "MedBot - Assistente de Saúde",
+        instructions: "Você é um assistente virtual especializado em saúde e atendimento ao cliente. Ajude com agendamentos, informações médicas e suporte geral. Seja sempre educado, empático e profissional."
+      };
     }
     
     return result.rows[0];
   } catch (error) {
     console.error("Erro ao buscar contexto:", error);
-    // Retorna contexto padrão em caso de erro
     return {
-      name: "Assistente de Saúde",
-      instructions: "Você é um assistente virtual especializado em saúde e atendimento ao cliente."
+      name: "MedBot - Assistente de Saúde",
+      instructions: "Você é um assistente virtual especializado em saúde e atendimento ao cliente. Ajude com agendamentos, informações médicas e suporte geral. Seja sempre educado, empático e profissional."
     };
   }
 };

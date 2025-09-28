@@ -5,7 +5,7 @@ import { loginUser } from '../lib/api/auth/authApi'
 import { fetchContext } from '../lib/api/adm/fetchBotContext'
 
 export default function Login() {
-  const { setUserId } = useUser()
+  const { setUser } = useUser()
   const navigate = useNavigate()
   const location = useLocation()
   const [formData, setFormData] = useState({
@@ -24,7 +24,7 @@ export default function Login() {
       const result = await loginUser(formData)
       
       if (result.success) {
-        setUserId(result.data.user.id.toString())
+        setUser(result.data.user)
         
         // Busca contexto do bot após login
         try {

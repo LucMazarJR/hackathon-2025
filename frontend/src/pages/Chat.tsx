@@ -14,7 +14,7 @@ interface ChatMessage {
 
 export default function Chat() {
   const { shouldRender, isClosing, isOpening, handleClose, handleOpen } = useMenu()
-  const { isLoggedIn } = useUser()
+  const { user, isLoggedIn } = useUser()
   const location = useLocation()
   const navigate = useNavigate()
   
@@ -23,9 +23,19 @@ export default function Chat() {
   //     navigate('/welcome')
   //   }
   // }, [isLoggedIn, navigate])
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: 0, type: 'chat', message: 'Olá! Sou o **MedBot**, seu assistente médico virtual.\n\nEnvie uma mensagem para iniciarmos nossa conversa!' }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const getWelcomeMessage = () => {
+      if (user?.user_type === 'admin') {
+        return 'Olá! Sou o **MedBot**, seu assistente administrativo.\n\nComo posso ajudá-lo com a gestão do sistema hoje?'
+      } else if (user?.user_type === 'doctor') {
+        return 'Olá! Sou o **MedBot**, seu assistente médico.\n\nComo posso ajudá-lo com seus pacientes e atendimentos hoje?'
+      } else {
+        return 'Olá! Sou o **MedBot**, seu assistente médico virtual.\n\nEnvie uma mensagem para iniciarmos nossa conversa!'
+      }
+    }
+    
+    return [{ id: 0, type: 'chat', message: getWelcomeMessage() }]
+  });
   const [usrMessage, setUsrMessage] = useState("");
   const [showDocumentMenu, setShowDocumentMenu] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

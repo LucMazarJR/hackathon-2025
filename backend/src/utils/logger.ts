@@ -5,6 +5,7 @@ import * as routeAdmin from "../routes/admin/routes.js";
 import * as routerBot from "../routes/bot/routes.js";
 import * as Middleware from "../middleware/middleware.js";
 import * as adminController from "../controller/admin/adminController.js";
+import * as doctorController from "../controller/admin/doctorController.js";
 import * as botController from "../controller/bot/botController.js";
 import * as authController from "../controller/auth/authController.js";
 import { upload } from "../middleware/upload.js";
@@ -167,14 +168,17 @@ export const connectServer = async (PORT: number) => {
       // amazonq-ignore-next-line
       } else {
         return res.status(200).json({ 
-          name: "Assistente de Saúde", 
-          instructions: "Você é um assistente virtual especializado em saúde e atendimento ao cliente." 
+          name: "MedBot - Assistente de Saúde", 
+          instructions: "Você é um assistente virtual especializado em saúde e atendimento ao cliente. Ajude com agendamentos, informações médicas e suporte geral. Seja sempre educado, empático e profissional." 
         });
       }
     // amazonq-ignore-next-line
     } catch (error) {
       console.error("Erro ao buscar contexto:", error);
-      return res.status(500).json({ message: "Erro interno do servidor" });
+      return res.status(200).json({ 
+        name: "MedBot - Assistente de Saúde", 
+        instructions: "Você é um assistente virtual especializado em saúde e atendimento ao cliente. Ajude com agendamentos, informações médicas e suporte geral. Seja sempre educado, empático e profissional." 
+      });
     }
   });
 
@@ -188,6 +192,57 @@ export const connectServer = async (PORT: number) => {
       return res.status(status).json({ message: response });
     } catch (error) {
       console.error("Erro ao processar contexto do administrador:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // DOCTORS CRUD
+  app.get("/admin/doctors", async (req, res) => {
+    try {
+      let [status, response] = await doctorController.getDoctorsController();
+      return res.status(status).json(response);
+    } catch (error) {
+      console.error("Erro ao buscar médicos:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.post("/admin/doctors", async (req, res) => {
+    const { nome, sobrenome, cpf, crm_registro, crm_uf, id_especializacao, dt_nascimento } = req.body;
+    try {
+      let [status, response] = await doctorController.createDoctorController(
+        nome, sobrenome, cpf, crm_registro, crm_uf, id_especializacao, dt_nascimento
+      );
+      return res.status(status).json(response);
+    } catch (error) {
+      console.error("Erro ao criar médico:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.put("/admin/doctors/:id", async (req, res) => {
+    const { id } = req.params;
+    const { nome, sobrenome, cpf, crm_registro, crm_uf, id_especializacao, dt_nascimento } = req.body;
+    try {
+      let [status, response] = await doctorController.updateDoctorController(
+        parseInt(id), nome, sobrenome, cpf, crm_registro, crm_uf, id_especializacao, dt_nascimento
+      );
+      return res.status(status).json(response);
+    } catch (error) {
+      console.error("Erro ao atualizar médico:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.delete("/admin/doctors/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      let [status, response] = await doctorController.deleteDoctorController(
+        parseInt(id)
+      );
+      return res.status(status).json(response);
+    } catch (error) {
+      console.error("Erro ao remover médico:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
     }
   });

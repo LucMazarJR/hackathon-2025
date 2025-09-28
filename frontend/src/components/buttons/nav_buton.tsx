@@ -4,14 +4,13 @@ import { useNavigate } from "react-router-dom"
 interface navButtonProps {
     children: ReactNode
     path: string
-    className?: string
 }
 
-export default function NavButton({ children, path, className }: navButtonProps) {
+export default function NavButton({ children, path }: navButtonProps) {
     const navigate = useNavigate()
 
     return (
-        <button onClick={() => navigate(path)} className={className}>
+        <button onClick={() => navigate(path)}>
             {children}
         </button>
     )

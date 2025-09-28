@@ -19,7 +19,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Layout />}>
             <Route index element={<Home />} />
-            // amazonq-ignore-next-line
+            {/* amazonq-ignore-next-line */}
             <Route path='/user' element={
               <ProtectedRoute>
                 <User />

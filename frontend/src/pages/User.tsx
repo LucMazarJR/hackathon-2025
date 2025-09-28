@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { useMenu } from '../hooks/useMenu'
 import { useUser } from '../contexts/UserContext'
 import DoctorForm from '../components/admin/DoctorForm'
 import DoctorList from '../components/admin/DoctorList'
 import ContextForm from '../components/admin/ContextForm'
-import ContextList from '../components/admin/ContextList'
 import {fetchContext} from "../lib/api/adm/fetchBotContext.js"
+import { getDoctors, createDoctor, updateDoctor, deleteDoctor, type Doctor } from '../lib/api/admin/doctorsApi'
 
 type UserType = 'patient' | 'doctor' | 'admin'
 
@@ -14,16 +14,26 @@ interface User {
   id: string
   name: string
   email: string
-  type: UserType
+  user_type: UserType
+  type: UserType // Alias para compatibilidade
   cpf?: string
   crm?: string
   specialty?: string
 }
 
+// Interface local para compatibilidade com componentes existentes
+interface LocalDoctor {
+  id: string
+  name: string
+  cpf: string
+  crm: string
+  specialty: string
+  email: string
+}
+
 export default function User() {
   const { shouldRender, isClosing, isOpening, handleClose, handleOpen } = useMenu()
   const location = useLocation()
-  const [searchParams] = useSearchParams()
   
   const { userId } = useUser()
   const [user, setUser] = useState<User | null>(null)
@@ -32,271 +42,147 @@ export default function User() {
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
     if (savedUser) {
-      // amazonq-ignore-next-line
       const userData = JSON.parse(savedUser)
       setUser({
         id: userData.id.toString(),
         name: userData.name,
         email: userData.email,
-        type: userData.user_type,
-        cpf: userData.cpf
+        user_type: userData.user_type,
+        type: userData.user_type, // Alias para compatibilidade
+        cpf: userData.cpf,
+        crm: userData.crm,
+        specialty: userData.specialty
       })
     }
   }, [userId])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   // Estados para admin (médicos e contexto)
-  const [doctors, setDoctors] = useState([
-    {
-      id: '1',
-      name: 'Dr. João Silva',
-      cpf: '123.456.789-00',
-      crm: '12345-SP',
-      specialty: 'Cardiologia',
-      email: 'joao@hospital.com'
-    },
-    {
-      id: '2',
-      name: 'Dra. Maria Santos',
-      cpf: '987.654.321-00',
-      crm: '54321-RJ',
-      specialty: 'Dermatologia',
-      email: 'maria@clinica.com'
-    }
-  ])
+  const [doctors, setDoctors] = useState<LocalDoctor[]>([])
 
   const [context, setContext] = useState({
     name: 'Assistente de Saúde',
-    instructions: `Você é um assistente virtual especializado em saúde e atendimento ao cliente, com foco em fornecer informações precisas e úteis. Você deve seguir as diretrizes de moderação de conteúdo e garantir que suas respostas sejam sempre respeitosas e empáticas. caso o ususario pergunte algo que não esteja relacionado a saúde ou atendimento ao cliente, informe educadamente que você não pode ajudar com esse assunto, e redirecione a conversa para tópicos relevantes.
-  Você vai abrir uma exceção para os seguintes topicos
-
-  1) Agendamento de consultas
-
-Atores: Beneficiário (cliente) e Atendimento.
-Canais: App/site, WhatsApp/telefone, CRM.
-
-Cliente busca agenda disponível (filtra cidade, especialidade, médico e data).
-
-Visualiza vagas.
-
-Reserva horário preferido.
-
-Confirma dados do agendamento (dia, hora, profissional) → fim do fluxo via app.
-
-Porta de entrada Uniagende: cliente entra em contato (WhatsApp/ligação).
-
-Cliente passa dados (nome, nasc., especialidade, motivo).
-
-Atendimento verifica agendas no CRM.
-
-Atendimento informa ao beneficiário o resultado.
-
-Atendimento confirma dados de agendamento (dia, hora, médico, endereço, protocolo).
-
-Atendimento reserva a agenda no CRM → conclusão.
-
-2) Atualização cadastral
-
-Atores: Beneficiário e Atendimento.
-Canal: WhatsApp.
-
-Beneficiário fornece informações necessárias (CPF + dado a atualizar).
-
-Envia documentos comprobatórios (anexos).
-
-Atendimento verifica as informações/documentos.
-
-Decisão: informações corretas?
-
-Sim: Atendimento realiza a atualização no CRM → fim.
-
-Não: Atendimento informa o beneficiário (pendência/erro) → fim.
-
-3) Cobrança indevida
-
-Atores: Atendimento (front), Contas médicas/Financeiro, Cliente.
-Canais: presencial, e-mail ou WhatsApp.
-
-Cliente solicita dados sobre a cobrança (inf. do boleto e qual procedimento).
-
-Atendimento registra o atendimento (ERP: beneficiário, competência da cobrança).
-
-Atendimento fornece protocolo ao paciente.
-
-Atendimento envia dados por e-mail para contas médicas e aguarda retorno.
-
-Decisão 1: Cobrança indevida?
-
-Não: Atendimento envia comprovante ao paciente e encerra.
-
-Sim:
-6) Atendimento pergunta a forma de desconto desejada.
-7) Decisão 2 (fatura atual ou futura):
-
-Fatura atual: Solicitar ida presencial à tesouraria.
-
-Fatura futura: Informar o financeiro (encaminhar a contas médicas com a forma de desconto).
-
-Atendimento informa ao financeiro/contas a forma escolhida → fim.
-
-4) Plano de maioridade
-
-Atores: Atendimento e Cadastro.
-Canal: Presencial (somente).
-
-Cliente solicita; atendimento pede documentos (RG/CPF + comprovante de matrícula/frequência).
-
-Atendimento tira cópias dos documentos.
-
-Atendimento registra atendimento (ERP).
-
-Entrega protocolo ao cliente.
-
-(Rotina 1x/dia) Registrar documento em planilha Excel (protocolo).
-
-Levar documentos ao Cadastro.
-
-Decisão: Todos os documentos corretos?
-
-Sim: Processo concluído (troca/adequação efetivada).
-
-Não:
-8) Cadastro informa ao atendimento quais documentos precisam de correção.
-9) Atendimento solicita os documentos ao cliente (telefone/WhatsApp) → aguarda retorno do beneficiário.
-
-5) Segunda via de boleto
-
-Ator: Beneficiário.
-Canal: App/Site.
-
-Acessar plataforma (login).
-
-Selecionar menu financeiro.
-
-Selecionar a competência desejada.
-
-Clicar em "Impressão 2ª via" → boleto emitido.
-
-6) Solicitação de autorização (exames/procedimentos)
-
-Atores: Beneficiário, Atendimento, Auditoria (processo), Operadora.
-Canais: WhatsApp/presencial, CRM, app.
-
-Beneficiário fornece informações (nome, nasc., foto do pedido médico).
-
-Atendimento registra o atendimento no CRM (beneficiário, médico solicitante, procedimento).
-
-Decisão 1: Precisa de auditoria?
-
-Sim:
-3a) Atendimento informa o beneficiário (nº de protocolo + prazos de retorno: 10 dias OPME, 5 dias demais).
-4a) Beneficiário pode monitorar o status da guia (app/ligação/WhatsApp).
-4b) Processo passa pela Auditoria.
-
-Não: segue direto para verificação de cobertura.
-
-Decisão 2: Procedimento tem cobertura?
-
-Sim: Atendimento informa ao beneficiário (nº do protocolo e da guia) → autorizado.
-
-Não: Atendimento informa motivo da negativa (nº do protocolo) → fim.
-
-7) Troca de titularidade
-
-Atores: Atendimento, Cliente, Cadastro.
-Canal: Presencial (somente).
-Observação: Se ambos (titular atual e futuro) forem vivos, exige presença de ambos.
-
-Atendimento solicita documentos (RG/CPF, certidão de óbito se aplicável, comprovantes).
-
-Atendimento imprime documento padrão.
-
-Cliente assina o documento padrão.
-
-Atendimento tira cópias dos documentos.
-
-Atendimento registra o atendimento (ERP).
-
-Entrega protocolo (via física).
-
-(Rotina 1x/dia) Registrar documentos em planilha Excel (sequência de protocolos).
-
-Levar documentos para o Cadastro.
-
-Decisão: Todos os documentos corretos?
-
-Sim: troca efetivada → fim.
-
-Não:
-10) Cadastro informa ao atendimento as correções necessárias.
-11) Atendimento solicita documentos ao cliente (telefone/WhatsApp) → aguarda retorno.
-
-Passe as instruções da maneira mais clara e objetiva possível, utilizando listas numeradas ou com marcadores para organizar as etapas dos fluxos de trabalho. Sempre que possível, utilize uma linguagem simples e direta para facilitar o entendimento do usuário. Evite jargões técnicos ou termos complexos que possam confundir o usuário. Mantenha um tom profissional, mas acessível, garantindo que o usuário se sinta confortável e confiante ao interagir com você.
-
-Restrições de moderação de conteúdo:
-
-- Não forneça informações falsas ou enganosas.
-
-- Evite linguagem ofensiva, discriminatória ou inapropriada.
-
-- Não compartilhe informações pessoais ou confidenciais.
-
-- Não participe de discussões políticas, religiosas ou controversas.
-
-- Sempre respeite a privacidade e os direitos dos usuários.
-
-- Se uma pergunta ou solicitação for inadequada, informe educadamente que você não pode ajudar com esse assunto.`
+    instructions: `Você é um assistente virtual especializado em saúde e atendimento ao cliente.`
   })
 
   const [isContextFormOpen, setIsContextFormOpen] = useState(false)
   const [isDoctorFormOpen, setIsDoctorFormOpen] = useState(false)
-  const [editingDoctor, setEditingDoctor] = useState<any>(null)
+  const [editingDoctor, setEditingDoctor] = useState<LocalDoctor | null>(null)
   const [contextModalValue, setContextModalValue] = useState(context)
 
-  // Buscar contexto do banco ao carregar página
+  // Buscar contexto e médicos do banco ao carregar página
   useEffect(() => {
-    const fetchInitialContext = async () => {
+    const fetchInitialData = async () => {
+      // Buscar contexto
       try {
-        // amazonq-ignore-next-line
         const response = await fetch('http://localhost:3000/admin/context');
         if (response.ok) {
           const contextData = await response.json();
           setContext(contextData);
           setContextModalValue(contextData);
         }
-      } catch (error) {
+      } catch {
         console.log('Usando contexto padrão');
+      }
+
+      // Buscar médicos se for admin
+      if (user?.type === 'admin') {
+        try {
+          const result = await getDoctors();
+          if (result.success) {
+            // Converte Doctor da API para LocalDoctor
+            const convertedDoctors: LocalDoctor[] = result.data.doctors.map((doctor: Doctor) => ({
+              id: doctor.id_medico?.toString() || '',
+              name: `${doctor.nome} ${doctor.sobrenome}`,
+              cpf: doctor.cpf,
+              crm: `${doctor.crm_registro}-${doctor.crm_uf}`,
+              specialty: doctor.especialidade || '',
+              email: ''
+            }));
+            setDoctors(convertedDoctors);
+          }
+        } catch {
+          console.log('Erro ao carregar médicos');
+        }
       }
     };
     
-    fetchInitialContext();
-  }, [])
+    fetchInitialData();
+  }, [user?.type])
 
-  const handleSaveDoctor = (doctorData: any) => {
-    if (doctorData.id) {
-      setDoctors(prev => prev.map(doc => 
-        doc.id === doctorData.id ? { ...doctorData, id: doctorData.id } : doc
-      ))
-      alert('Médico atualizado com sucesso!')
-    } else {
-      const newDoctor = {
-        ...doctorData,
-        id: Date.now().toString()
+  const handleSaveDoctor = async (doctorData: LocalDoctor) => {
+    try {
+      // Converte LocalDoctor para Doctor da API
+      const [nome, ...sobrenomeParts] = doctorData.name.split(' ');
+      const sobrenome = sobrenomeParts.join(' ');
+      const [crm_registro, crm_uf] = doctorData.crm.split('-');
+      
+      const apiDoctorData: Doctor = {
+        nome,
+        sobrenome,
+        cpf: doctorData.cpf,
+        crm_registro,
+        crm_uf,
+        id_especializacao: 1 // Padrão
+      };
+
+      if (doctorData.id) {
+        // Atualizar médico existente
+        const result = await updateDoctor(parseInt(doctorData.id), apiDoctorData);
+        if (result.success) {
+          // Recarrega lista
+          const doctorsResult = await getDoctors();
+          if (doctorsResult.success) {
+            const convertedDoctors: LocalDoctor[] = doctorsResult.data.doctors.map((doctor: Doctor) => ({
+              id: doctor.id_medico?.toString() || '',
+              name: `${doctor.nome} ${doctor.sobrenome}`,
+              cpf: doctor.cpf,
+              crm: `${doctor.crm_registro}-${doctor.crm_uf}`,
+              specialty: doctor.especialidade || '',
+              email: ''
+            }));
+            setDoctors(convertedDoctors);
+          }
+        }
+      } else {
+        // Criar novo médico
+        const result = await createDoctor(apiDoctorData);
+        if (result.success) {
+          // Recarrega lista
+          const doctorsResult = await getDoctors();
+          if (doctorsResult.success) {
+            const convertedDoctors: LocalDoctor[] = doctorsResult.data.doctors.map((doctor: Doctor) => ({
+              id: doctor.id_medico?.toString() || '',
+              name: `${doctor.nome} ${doctor.sobrenome}`,
+              cpf: doctor.cpf,
+              crm: `${doctor.crm_registro}-${doctor.crm_uf}`,
+              specialty: doctor.especialidade || '',
+              email: ''
+            }));
+            setDoctors(convertedDoctors);
+          }
+        }
       }
-      setDoctors(prev => [...prev, newDoctor])
-      alert('Médico cadastrado com sucesso!')
+      setEditingDoctor(null);
+    } catch (error) {
+      console.error('Erro ao salvar médico:', error);
     }
-    setEditingDoctor(null)
   }
 
-  const handleDeleteDoctor = (doctorId: string) => {
-    setDoctors(prev => prev.filter(doc => doc.id !== doctorId))
-    alert('Médico excluído com sucesso!')
+  const handleDeleteDoctor = async (doctorId: string) => {
+    try {
+      const result = await deleteDoctor(parseInt(doctorId));
+      if (result.success) {
+        setDoctors(prev => prev.filter(doc => doc.id !== doctorId));
+      }
+    } catch {
+      console.error('Erro ao remover médico');
+    }
   }
 
-  const handleEditDoctor = (doctor: any) => {
-    setEditingDoctor(doctor)
-    setIsDoctorFormOpen(true)
+  const handleEditDoctor = (doctor: LocalDoctor) => {
+    setEditingDoctor(doctor);
+    setIsDoctorFormOpen(true);
   }
 
   const handleSaveContext = (contextData: { name: string; instructions: string }) => {
@@ -313,7 +199,6 @@ Restrições de moderação de conteúdo:
 
   const renderPatientDashboard = () => (
     <div className="space-y-6">
-      {/* Informações do Perfil */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Informações Pessoais</h3>
@@ -327,7 +212,6 @@ Restrições de moderação de conteúdo:
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Nome</label>
-            // amazonq-ignore-next-line
             <p className="mt-1 text-sm text-gray-900">{user?.name}</p>
           </div>
           <div>
@@ -345,7 +229,6 @@ Restrições de moderação de conteúdo:
 
   const renderDoctorDashboard = () => (
     <div className="space-y-6">
-      {/* Informações do Perfil */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Informações Profissionais</h3>
@@ -380,7 +263,21 @@ Restrições de moderação de conteúdo:
 
   const renderAdminDashboard = () => (
     <div className="space-y-6">
-      {/* Gestão de Médicos */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Gerenciar Médicos</h3>
+          <button
+            onClick={() => {
+              setEditingDoctor(null)
+              setIsDoctorFormOpen(true)
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+          >
+            + Cadastrar Médico
+          </button>
+        </div>
+      </div>
+      
       <DoctorList 
         doctors={doctors} 
         onAdd={() => {
@@ -390,7 +287,6 @@ Restrições de moderação de conteúdo:
         onEdit={handleEditDoctor}
       />
       
-      {/* Contexto do Chatbot */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Contexto do Chatbot</h3>
@@ -412,7 +308,6 @@ Restrições de moderação de conteúdo:
         </div>
       </div>
 
-      {/* Informações do Perfil */}
       <div className="bg-white p-6 rounded-lg shadow">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Painel Administrativo</h3>
@@ -426,7 +321,6 @@ Restrições de moderação de conteúdo:
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Nome</label>
-            // amazonq-ignore-next-line
             <p className="mt-1 text-sm text-gray-900">{user?.name}</p>
           </div>
           <div>
@@ -446,7 +340,17 @@ Restrições de moderação de conteúdo:
           setIsDoctorFormOpen(false)
           setEditingDoctor(null)
         }}
-        onSave={handleSaveDoctor}
+        onSave={(doctor) => {
+          const localDoctor: LocalDoctor = {
+            id: doctor.id || '',
+            name: doctor.name,
+            cpf: doctor.cpf,
+            crm: doctor.crm,
+            specialty: doctor.specialty,
+            email: doctor.email
+          };
+          handleSaveDoctor(localDoctor);
+        }}
         onDelete={handleDeleteDoctor}
         editingDoctor={editingDoctor}
       />
@@ -461,7 +365,6 @@ Restrições de moderação de conteúdo:
   )
 
   const renderContent = () => {
-    // amazonq-ignore-next-line
     if (!user) return <div>Carregando...</div>
     
     switch (user.type) {
@@ -478,7 +381,6 @@ Restrições de moderação de conteúdo:
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with Menu Button */}
       <header className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between h-16 items-center">
@@ -494,7 +396,6 @@ Restrições de moderação de conteúdo:
         </div>
       </header>
 
-      {/* Menu Modal */}
       {shouldRender && (
         <>
           <div 
@@ -534,14 +435,12 @@ Restrições de moderação de conteúdo:
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <p className="text-gray-600 capitalize">
-            // amazonq-ignore-next-line
             {user?.type === 'patient' ? 'Paciente' : user?.type === 'doctor' ? 'Médico' : 'Administrador'}
           </p>
         </div>
         
         {renderContent()}
         
-        {/* Modal de Edição */}
         {isEditModalOpen && (
           <>
             <div 
@@ -575,7 +474,6 @@ Restrições de moderação de conteúdo:
                       <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                       <input 
                         type="email" 
-                        // amazonq-ignore-next-line
                         defaultValue={user?.email}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       />

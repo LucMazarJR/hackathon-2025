@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useUser } from '../contexts/UserContext'
 
 export default function Calendar() {
+  const { user } = useUser()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [shouldRender, setShouldRender] = useState(false)
@@ -92,7 +94,11 @@ export default function Calendar() {
       )}
       <div className="max-w-md mx-auto p-4">
         <div className="mb-6">
-          <p className="text-gray-600 text-sm">Seus compromissos e consultas</p>
+          <p className="text-gray-600 text-sm">
+            {user?.user_type === 'admin' ? 'Gestão de agendamentos' : 
+             user?.user_type === 'doctor' ? 'Seus atendimentos' : 
+             'Seus compromissos e consultas'}
+          </p>
         </div>
         
         {/* Espaço para o calendário */}
@@ -104,7 +110,11 @@ export default function Calendar() {
         
         {/* Lista de próximos compromissos */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-semibold mb-4">Próximos Compromissos</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {user?.user_type === 'admin' ? 'Agendamentos do Sistema' : 
+             user?.user_type === 'doctor' ? 'Próximos Atendimentos' : 
+             'Próximos Compromissos'}
+          </h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
