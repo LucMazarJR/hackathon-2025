@@ -18,6 +18,7 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
     name: '',
     instructions: ''
   })
+  const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
     if (editingContext) {
@@ -37,7 +38,11 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
     e.preventDefault()
     
     onSave(formData)
-    onClose()
+    setShowSuccess(true)
+    setTimeout(() => {
+      setShowSuccess(false)
+      onClose()
+    }, 2000)
   }
 
   if (!isOpen) return null
@@ -83,6 +88,15 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
               />
             </div>
             
+            {showSuccess && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
+                <div className="flex items-center">
+                  <span className="text-green-600 mr-2">✓</span>
+                  <span className="text-green-700 text-sm">Contexto atualizado com sucesso!</span>
+                </div>
+              </div>
+            )}
+            
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
@@ -93,9 +107,10 @@ export default function ContextForm({ isOpen, onClose, onSave, editingContext }:
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                disabled={showSuccess}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
               >
-                Salvar Alterações
+                {showSuccess ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             </div>
           </form>

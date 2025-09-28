@@ -27,7 +27,10 @@ export default function Chat() {
     { id: 0, type: 'chat', message: 'Olá! Sou o **MedBot**, seu assistente médico virtual.\n\nEnvie uma mensagem para iniciarmos nossa conversa!' }
   ]);
   const [usrMessage, setUsrMessage] = useState("");
+  const [showDocumentMenu, setShowDocumentMenu] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -38,13 +41,19 @@ export default function Chat() {
   }, [messages])
 
   const handleSendMessage = async () => {
+    let messageContent = usrMessage;
+    if (selectedFile) {
+      messageContent += `\n\n📄 Documento: ${selectedFile.name}`;
+    }
+    
     const userMsg = {
       id: messages.length + 1,
       type: "usr" as const,
-      message: usrMessage,
+      message: messageContent,
     };
     setMessages((prev) => [...prev, userMsg]);
     setUsrMessage("");
+    setSelectedFile(null);
 
     const botResponse = await fetchChatBot(usrMessage);
     const botMsg = {
@@ -137,26 +146,76 @@ export default function Chat() {
 
       {/* Input Area - Fixed at bottom */}
       <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
-        <div className="max-w-4xl mx-auto flex gap-2">
-          <textarea
-            placeholder="Digite sua mensagem..."
-            value={usrMessage}
-            onChange={(e) => setUsrMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                handleSendMessage()
-              }
-            }}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none min-h-[48px] max-h-32"
-            rows={1}
+        <div className="max-w-4xl mx-auto">
+          {selectedFile && (
+            <div className="mb-3 flex items-center justify-between bg-blue-50 p-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-blue-600">📄</span>
+                <span className="text-sm text-blue-700">{selectedFile.name}</span>
+              </div>
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="text-red-500 hover:text-red-700 text-sm"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          
+          <div className="flex gap-2 items-start">
+            <div className="flex-1 relative">
+              <textarea
+                placeholder="Digite sua mensagem..."
+                value={usrMessage}
+                onChange={(e) => setUsrMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
+                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none min-h-[48px] max-h-32"
+                rows={1}
+              />
+              <div className="absolute right-2 top-3">
+                <button
+                  onClick={() => setShowDocumentMenu(!showDocumentMenu)}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.64 16.2a2 2 0 01-2.83-2.83l8.49-8.49"/>
+                  </svg>
+                </button>
+                {showDocumentMenu && (
+                  <div className="absolute right-0 bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[150px]">
+                    <button
+                      onClick={() => {
+                        fileInputRef.current?.click()
+                        setShowDocumentMenu(false)
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-green-50 hover:text-green-700 text-sm transition-colors"
+                    >
+                      Inserir documento
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={handleSendMessage}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Enviar
+            </button>
+          </div>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+            className="hidden"
           />
-          <button
-            onClick={handleSendMessage}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors self-end"
-          >
-            Enviar
-          </button>
         </div>
       </div>
     </div>
