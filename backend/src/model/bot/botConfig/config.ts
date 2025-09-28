@@ -7,10 +7,13 @@
  * atualização cadastral, etc.).
  */
 
-import { Agent, run } from "@openai/agents";
+import { Agent, run, tool } from "@openai/agents";
 import OpenAI from "openai";
 import { sessionManager } from "../../class/Agent.js";
 import "dotenv/config";
+import { getProtocolo } from "../../../database/bot/consulta.js";
+
+
 
 /**
  * Inicializa o cliente da OpenAI usando a chave de API fornecida
@@ -28,6 +31,8 @@ const client = new OpenAI({
  * específicas de moderação de conteúdo e fluxos de atendimento.
  * @type {Agent}
  */
+
+let protocolo = await getProtocolo()
 
 export const agent = new Agent({
   name: "Ajudant",
@@ -139,7 +144,7 @@ Selecionar menu financeiro.
 
 Selecionar a competência desejada.
 
-Clicar em “Impressão 2ª via” → boleto emitido.
+Clicar em "Impressão 2ª via" → boleto emitido.
 
 6) Solicitação de autorização (exames/procedimentos)
 
@@ -209,7 +214,15 @@ Restrições de moderação de conteúdo:
 
 - Sempre respeite a privacidade e os direitos dos usuários.
 
-- Se uma pergunta ou solicitação for inadequada, informe educadamente que você não pode ajudar com esse assunto.`,
+- Se uma pergunta ou solicitação for inadequada, informe educadamente que você não pode ajudar com esse assunto.
+
+quando um usuario pedir uma verificação de autorização de exame, retorne apenas com nome do protocolo. Com base no nome, use a função getProtocolo(nome:string) para buscar o tipo do procedimento no banco de dados e retorne apenas o tipo do procedimento. com o retorno, retorno o tipo do procedimento para o usuario.
+
+Caso o tipo do protocolo seja "Sem protocolo", informe ao usuário que o procedimento não requer autorização prévia. Caso o tipo do protocolo seja "Com protocolo", informe ao usuário que o procedimento requer autorização prévia e que ele deve aguardar a análise em até 5 dias. Caso o tipo do protocolo seja "Com ou sem protocolo", informe ao usuário que o procedimento pode ou não requerer autorização prévia, dependendo do caso, e que ele deve aguardar a análise em até 5 dias.
+Você vai usar com base nessa informação: ${JSON.stringify(protocolo)}, pegue o protocolo do documento e compara com essa informação, e retorno se precisa de auditoria e o prazo de retorno.
+
+
+`
 });
 
 /**
@@ -226,18 +239,15 @@ export let sendMessage = async (
   message: string,
   sessionId: string = "default"
 ): Promise<string> => {
-  // Obtém a sessão de chat, criando-a se não existir (presumido pela implementação do sessionManager).
-  const chat = sessionManager.getSession(sessionId); // Recupera o histórico de contexto da sessão.
+  const chat = sessionManager.getSession(sessionId);
+  const context = chat.getContext();
+  const fullPrompt = context ? `${context}\nUsuário: ${message}` : message;
 
-  const context = chat.getContext(); // Constrói o prompt completo para o agente, incluindo o contexto da conversa.
-  const fullPrompt = context ? `${context}\nUsuário: ${message}` : message; // Executa o agente com o prompt completo.
+  // ⚡️ O próprio Agent já consegue decidir se chama a função ou não
+  const response = await run(agent, fullPrompt);
 
-  const response = await run(agent, fullPrompt); // Extrai a mensagem final do assistente da resposta.
-  const assistantMessage: any = response.finalOutput; // Adiciona as mensagens do usuário e do assistente ao histórico da sessão.
-
-
-  chat.addMessage(message, assistantMessage); // Retorna a resposta do assistente.
-
+  const assistantMessage: any = response.finalOutput;
+  chat.addMessage(message, assistantMessage);
 
   return assistantMessage;
 };

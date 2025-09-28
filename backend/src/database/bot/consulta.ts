@@ -1,12 +1,8 @@
 import * as DB from "../../config/poll.js"
 
 
-export let getProtocolo = async (nome:string):Promise<any> =>{
-    nome = nome.toUpperCase()
-    // let result = await DB.pool.query("SELECT * FROM public.tb_procedimentos;", ['nome_procedimento'])
-    let result = await DB.pool.query("SELECT nome_procedimento, tipo FROM tb_procedimentos WHERE nome_procedimento = $1", [nome])
+export let getProtocolo = async ():Promise<any> =>{
+    let result = await DB.pool.query("SELECT nome_procedimento, tipo FROM tb_procedimentos")
 
-    return result
+    return result.rows[0].tipo
 }
-
-console.log(await getProtocolo("IMPLANTE COCLEAR (COM DIRETRIZ DE UTILIZAÇÃO)"))
