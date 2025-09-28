@@ -12,6 +12,7 @@ export class TextExtractionService {
       const { data: { text } } = await Tesseract.recognize(filePath, 'por', {
         logger: m => console.log(m)
       });
+      console.log(text)
       return text.trim();
     } catch (error) {
       console.error('Erro ao extrair texto da imagem:', error);

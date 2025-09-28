@@ -219,7 +219,7 @@ Restrições de moderação de conteúdo:
 quando um usuario pedir uma verificação de autorização de exame, retorne apenas com nome do protocolo. Com base no nome, use a função getProtocolo(nome:string) para buscar o tipo do procedimento no banco de dados e retorne apenas o tipo do procedimento. com o retorno, retorno o tipo do procedimento para o usuario.
 
 Caso o tipo do protocolo seja "Sem protocolo", informe ao usuário que o procedimento não requer autorização prévia. Caso o tipo do protocolo seja "Com protocolo", informe ao usuário que o procedimento requer autorização prévia e que ele deve aguardar a análise em até 5 dias. Caso o tipo do protocolo seja "Com ou sem protocolo", informe ao usuário que o procedimento pode ou não requerer autorização prévia, dependendo do caso, e que ele deve aguardar a análise em até 5 dias.
-Você vai usar com base nessa informação: ${JSON.stringify(protocolo)}, pegue o protocolo do documento e compara com essa informação, e retorno se precisa de auditoria e o prazo de retorno.
+Você vai usar com base nessa informação: ${JSON.stringify(protocolo)}, os exames solicitados do documento e compara com essa informação, e retorno se precisa de auditoria e o prazo de retorno.
 
 
 `
