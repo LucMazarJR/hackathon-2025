@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from 'react-router-dom'
-import { fetchChatBot } from "../lib/api/bot/fecthBot.ts";
+import { fetchChatBot, fetchChatBotWithDocument } from "../lib/api/bot/fecthBot.ts";
 import Message from "../components/layout/message";
 import FormattedMessage from "../components/layout/FormattedMessage";
 import { useMenu } from '../hooks/useMenu'
@@ -41,6 +41,8 @@ export default function Chat() {
   }, [messages])
 
   const handleSendMessage = async () => {
+    if (!usrMessage.trim() && !selectedFile) return;
+    
     let messageContent = usrMessage;
     if (selectedFile) {
       messageContent += `\n\n📄 Documento: ${selectedFile.name}`;
@@ -52,20 +54,39 @@ export default function Chat() {
       message: messageContent,
     };
     setMessages((prev) => [...prev, userMsg]);
+    
+    const currentMessage = usrMessage;
+    const currentFile = selectedFile;
     setUsrMessage("");
     setSelectedFile(null);
 
-    const botResponse = await fetchChatBot(usrMessage);
-    const botMsg = {
-      id: messages.length + 2,
-      type: "chat" as const,
-      message: botResponse.message,
-    };
-    setMessages((prev) => {
-      const updatedMessages = [...prev, botMsg];
-      localStorage.setItem("messages", JSON.stringify(updatedMessages));
-      return updatedMessages;
-    });
+    try {
+      let botResponse;
+      if (currentFile) {
+        botResponse = await fetchChatBotWithDocument(currentMessage, currentFile);
+      } else {
+        botResponse = await fetchChatBot(currentMessage);
+      }
+      
+      const botMsg = {
+        id: messages.length + 2,
+        type: "chat" as const,
+        message: botResponse.message,
+      };
+      setMessages((prev) => {
+        const updatedMessages = [...prev, botMsg];
+        localStorage.setItem("messages", JSON.stringify(updatedMessages));
+        return updatedMessages;
+      });
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      const errorMsg = {
+        id: messages.length + 2,
+        type: "chat" as const,
+        message: "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    }
   };
 
   return (
@@ -203,7 +224,8 @@ export default function Chat() {
             </div>
             <button
               onClick={handleSendMessage}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+              disabled={!usrMessage.trim() && !selectedFile}
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               Enviar
             </button>
@@ -212,7 +234,7 @@ export default function Chat() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+            accept=".pdf,.jpg,.jpeg,.png,.gif"
             onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
             className="hidden"
           />

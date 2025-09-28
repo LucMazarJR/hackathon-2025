@@ -9,3 +9,9 @@
  * @type {string}
  */
 export let bot = "/bot/:id";
+
+/**
+ * Define a rota (endpoint) da API para upload de documentos.
+ * @type {string}
+ */
+export let botDocument = "/bot/:id/document";

@@ -6,6 +6,7 @@ import * as routerBot from "../routes/bot/routes.js";
 import * as Middleware from "../middleware/middleware.js";
 import * as adminController from "../controller/admin/adminController.js";
 import * as botController from "../controller/bot/botController.js";
+import { upload } from "../middleware/upload.js";
 
 const app = express();
 app.use(express.json());
@@ -44,14 +45,38 @@ export const connectServer = async (PORT: number) => {
   // ROTA BOT
   app.post(routerBot.bot, async (req, res) => {
     const { message } = req.body;
-    const id = req.body.id;
+    const { id } = req.params;
     try {
       let [status, messageBot] = await botController.messageBotController(
-        message
+        message,
+        id
       );
       return res.status(status).json({ message: messageBot });
     } catch (error) {
-      console.error("Erro ao autenticar administrador:", error);
+      console.error("Erro ao processar mensagem:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // ROTA BOT DOCUMENT UPLOAD
+  app.post(routerBot.botDocument, upload.single('document'), async (req, res) => {
+    const { message } = req.body;
+    const { id } = req.params;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "Nenhum arquivo foi enviado" });
+    }
+
+    try {
+      let [status, messageBot] = await botController.documentUploadController(
+        file,
+        message,
+        id
+      );
+      return res.status(status).json({ message: messageBot });
+    } catch (error) {
+      console.error("Erro ao processar documento:", error);
       return res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
