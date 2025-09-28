@@ -148,9 +148,9 @@ export default function Chat() {
               </button>
             </div>
             <div className="space-y-2">
-              {location.pathname !== '/dashboard' && (
-                <a href="/dashboard" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
-                  Dashboard
+              {location.pathname !== '/user' && (
+                <a href="/user" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
+                  Painel do Usuário
                 </a>
               )}
               {location.pathname !== '/calendar' && (
@@ -158,9 +158,6 @@ export default function Chat() {
                   Calendário
                 </a>
               )}
-              <a href="/profile" className="block w-full text-left p-3 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors">
-                Configurações
-              </a>
             </div>
           </div>
         </>
@@ -168,7 +165,7 @@ export default function Chat() {
 
       {/* Messages Area - Scrollable */}
       <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
-        <div className="max-w-4xl lg:max-w-6xl mx-auto space-y-4">
+        <div className="max-w-4xl lg:max-w-6xl mx-auto space-y-6">
           {messages.map((msg) => (
             <Message
               key={msg.id}

@@ -11,8 +11,8 @@ export default function Header() {
           </Link>
           
           <nav className="hidden md:flex space-x-6">
-            <Link to="/dashboard" className="text-white hover:text-green-100 transition-colors font-medium">
-              Dashboard
+            <Link to="/user" className="text-white hover:text-green-100 transition-colors font-medium">
+              Painel
             </Link>
             <Link to="/chat" className="text-white hover:text-green-100 transition-colors font-medium">
               Chat
@@ -23,7 +23,7 @@ export default function Header() {
           </nav>
           
           <div className="flex items-center space-x-4">
-            <Link to="/profile" className="text-white hover:text-green-100 transition-colors">
+            <Link to="/user" className="text-white hover:text-green-100 transition-colors">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>

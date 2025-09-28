@@ -4,8 +4,7 @@ import Home from './pages/Home'
 import Welcome from './pages/Welcome'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import Profile from './pages/Profile'
+import User from './pages/User'
 import Calendar from './pages/Calendar'
 import Chat from './pages/Chat'
 import NotFound from './pages/NotFound'
@@ -18,8 +17,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path='/dashboard' element={<Dashboard />} />
-            <Route path='/profile' element={<Profile />} />
+            <Route path='/user' element={<User />} />
             <Route path='/calendar' element={<Calendar />} />
             <Route path='/chat' element={<Chat />} />
           </Route>
