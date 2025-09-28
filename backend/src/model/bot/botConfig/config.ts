@@ -279,6 +279,22 @@ RESTRIÇÕES:
 - Gere protocolos para acompanhamento de todos os processos`
 });
 
+// Cache de sessões para manter memória da conversa
+const sessionCache = new Map<string, { messages: string[], lastUsed: number }>();
+
+// Limpeza automática de sessões antigas (30 minutos)
+setInterval(() => {
+  const now = Date.now();
+  const thirtyMinutes = 30 * 60 * 1000;
+  
+  for (const [sessionId, session] of sessionCache.entries()) {
+    if (now - session.lastUsed > thirtyMinutes) {
+      sessionCache.delete(sessionId);
+      console.log(`Sessão ${sessionId} removida por inatividade`);
+    }
+  }
+}, 10 * 60 * 1000); // Executa a cada 10 minutos
+
 /**
  * Função para enviar mensagem para o agente
  */
@@ -290,8 +306,27 @@ export const sendMessage = async (message: string, sessionId: string): Promise<s
       return "Erro: Chave da OpenAI não configurada";
     }
 
-    console.log("Enviando mensagem para o agente:", message);
-    const result = await run(agent, message);
+    console.log(`Enviando mensagem para sessão ${sessionId}:`, message);
+    
+    // Recuperar histórico da sessão
+    const sessionData = sessionCache.get(sessionId) || { messages: [], lastUsed: Date.now() };
+    
+    // Criar contexto com histórico das últimas 5 mensagens
+    const recentMessages = sessionData.messages.slice(-5).join('\n');
+    const contextualMessage = recentMessages ? 
+      `Histórico da conversa:\n${recentMessages}\n\nMensagem atual: ${message}` : 
+      message;
+    
+    // Executar agente
+    const result = await run(agent, contextualMessage);
+    
+    // Salvar mensagem no histórico
+    sessionData.messages.push(`Usuário: ${message}`);
+    sessionData.lastUsed = Date.now();
+    sessionCache.set(sessionId, sessionData);
+    
+    console.log(`Sessão ${sessionId} atualizada com ${sessionData.messages.length} mensagens`);
+    
     console.log("Resposta do agente:", result);
     
     // Extrair texto da resposta do agente
@@ -314,12 +349,24 @@ export const sendMessage = async (message: string, sessionId: string): Promise<s
       
       for (const path of paths) {
         if (typeof path === 'string' && path.trim()) {
+          // Adicionar resposta do bot ao histórico
+          const sessionData = sessionCache.get(sessionId);
+          if (sessionData) {
+            sessionData.messages.push(`Bot: ${path}`);
+            sessionCache.set(sessionId, sessionData);
+          }
           return path;
         }
       }
       
       // Se nada funcionar, retorna o JSON para debug
-      return JSON.stringify(obj).substring(0, 500) + "...";
+      const debugResponse = JSON.stringify(obj).substring(0, 500) + "...";
+      const sessionData = sessionCache.get(sessionId);
+      if (sessionData) {
+        sessionData.messages.push(`Bot: ${debugResponse}`);
+        sessionCache.set(sessionId, sessionData);
+      }
+      return debugResponse;
     }
     
     return String(result) || "Erro: resposta vazia";
