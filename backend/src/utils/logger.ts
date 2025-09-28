@@ -7,6 +7,7 @@ import * as Middleware from "../middleware/middleware.js";
 import * as adminController from "../controller/admin/adminController.js";
 import * as botController from "../controller/bot/botController.js";
 import { upload } from "../middleware/upload.js";
+import agendamentoRoutes from "../routes/bot/agendamentoRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -80,6 +81,9 @@ export const connectServer = async (PORT: number) => {
       return res.status(500).json({ message: "Erro interno do servidor" });
     }
   });
+
+  // ROTAS DE AGENDAMENTO
+  app.use(routerBot.agendamento, agendamentoRoutes);
 
   app.post(
     routeAdmin.adminContext,

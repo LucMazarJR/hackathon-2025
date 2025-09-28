@@ -12,6 +12,13 @@ import OpenAI from "openai";
 import { sessionManager } from "../../class/Agent.js";
 import "dotenv/config";
 import { getProtocolo } from "../../../database/bot/consulta.js";
+import { 
+  buscarMedicosDisponiveis,
+  verificarDisponibilidadeEspecifica,
+  realizarAgendamento,
+  listarEspecialidadesDisponiveis,
+  listarCidadesDisponiveis
+} from "../agendamentoTools.js";
 
 
 
@@ -36,10 +43,29 @@ let protocolo = await getProtocolo()
 
 export const agent = new Agent({
   name: "Ajudant",
+  model: "gpt-4o-mini",
+  tools: [
+    buscarMedicosDisponiveis,
+    verificarDisponibilidadeEspecifica,
+    realizarAgendamento,
+    listarEspecialidadesDisponiveis,
+    listarCidadesDisponiveis
+  ],
   instructions: `Você é um assistente virtual especializado em saúde e atendimento ao cliente, com foco em fornecer informações precisas e úteis. Você deve seguir as diretrizes de moderação de conteúdo e garantir que suas respostas sejam sempre respeitosas e empáticas. caso o ususario pergunte algo que não esteja relacionado a saúde ou atendimento ao cliente, informe educadamente que você não pode ajudar com esse assunto, e redirecione a conversa para tópicos relevantes.
   Você vai abrir uma exceção para os seguintes topicos
 
   1) Agendamento de consultas
+
+  IMPORTANTE: Para agendamentos de consultas, você deve:
+  - Primeiro perguntar qual especialidade o paciente precisa
+  - Perguntar em qual cidade prefere ser atendido
+  - Usar a ferramenta buscar_medicos_disponiveis para mostrar opções
+  - Quando o paciente escolher um médico e horário, usar verificar_disponibilidade
+  - Se disponível, perguntar o nome completo do paciente
+  - Usar realizar_agendamento para confirmar
+  - Sempre fornecer o protocolo gerado
+  
+  Se não houver vagas no período de 1 mês, informe que não há vagas disponíveis.
 
 Atores: Beneficiário (cliente) e Atendimento.
 Canais: App/site, WhatsApp/telefone, CRM.

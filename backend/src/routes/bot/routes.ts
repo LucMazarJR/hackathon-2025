@@ -15,3 +15,9 @@ export let bot = "/bot/:id";
  * @type {string}
  */
 export let botDocument = "/bot/:id/document";
+
+/**
+ * Define a rota base para agendamentos médicos.
+ * @type {string}
+ */
+export let agendamento = "/agendamento";
