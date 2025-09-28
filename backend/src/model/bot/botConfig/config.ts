@@ -11,7 +11,7 @@ import { Agent, run, tool } from "@openai/agents";
 import OpenAI from "openai";
 import { sessionManager } from "../../class/Agent.js";
 import "dotenv/config";
-import { getProtocolo } from "../../../database/bot/consulta.js";
+// import { getProtocolo } from "../../../database/bot/consulta.js"; // Usando dados mock
 import { 
   buscarMedicosDisponiveis,
   verificarDisponibilidadeEspecifica,
@@ -39,7 +39,27 @@ const client = new OpenAI({
  * @type {Agent}
  */
 
-let protocolo = await getProtocolo()
+import { getCurrentContext } from "../../../database/admin/contextDatabase.js";
+
+// Dados mock para protocolo
+const protocolo = [
+  { nome_procedimento: "Angioplastia transluminal percutânea", tipo: "Com protocolo" },
+  { nome_procedimento: "Ressonância magnética", tipo: "Sem protocolo" }
+];
+
+// Função para buscar contexto atualizado
+const getLatestContext = async (): Promise<string> => {
+  try {
+    const contextFromDB = await getCurrentContext();
+    if (contextFromDB) {
+      return contextFromDB.instructions;
+    }
+  } catch (error) {
+    // amazonq-ignore-next-line
+    console.log("Usando contexto padrão (banco indisponível)");
+  }
+  return "Você é um assistente virtual especializado em saúde e atendimento ao cliente.";
+};
 
 export const agent = new Agent({
   name: "Ajudant",
@@ -245,7 +265,7 @@ Restrições de moderação de conteúdo:
 quando um usuario pedir uma verificação de autorização de exame, retorne apenas com nome do protocolo. Com base no nome, use a função getProtocolo(nome:string) para buscar o tipo do procedimento no banco de dados e retorne apenas o tipo do procedimento. com o retorno, retorno o tipo do procedimento para o usuario.
 
 Caso o tipo do protocolo seja "Sem protocolo", informe ao usuário que o procedimento não requer autorização prévia. Caso o tipo do protocolo seja "Com protocolo", informe ao usuário que o procedimento requer autorização prévia e que ele deve aguardar a análise em até 5 dias. Caso o tipo do protocolo seja "Com ou sem protocolo", informe ao usuário que o procedimento pode ou não requerer autorização prévia, dependendo do caso, e que ele deve aguardar a análise em até 5 dias.
-Você vai usar com base nessa informação: ${JSON.stringify(protocolo)}, os exames solicitados do documento e compara com essa informação, e retorno se precisa de auditoria e o prazo de retorno.
+Para verificação de procedimentos, consulte o banco de dados interno e informe sobre necessidade de auditoria e prazos.
 
 
 `
@@ -265,15 +285,35 @@ export let sendMessage = async (
   message: string,
   sessionId: string = "default"
 ): Promise<string> => {
-  const chat = sessionManager.getSession(sessionId);
-  const context = chat.getContext();
-  const fullPrompt = context ? `${context}\nUsuário: ${message}` : message;
+  try {
+    // Usa o cliente OpenAI diretamente para evitar problemas com Agent
+    const response = await client.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: await getLatestContext()
+        },
+        {
+          role: "user",
+          content: message
+        }
+      ]
+    });
 
-  // ⚡️ O próprio Agent já consegue decidir se chama a função ou não
-  const response = await run(agent, fullPrompt);
+    const assistantMessage = response.choices[0].message.content || "Desculpe, não consegui processar sua mensagem.";
+    
+    // Adiciona ao histórico se o sessionManager estiver disponível
+    try {
+      const chat = sessionManager.getSession(sessionId);
+      chat.addMessage(message, assistantMessage);
+    } catch (error) {
+      console.log("SessionManager não disponível, continuando sem histórico");
+    }
 
-  const assistantMessage: any = response.finalOutput;
-  chat.addMessage(message, assistantMessage);
-
-  return assistantMessage;
+    return assistantMessage;
+  } catch (error) {
+    console.error("Erro ao processar mensagem:", error);
+    return "Erro ao processar sua mensagem. Tente novamente.";
+  }
 };

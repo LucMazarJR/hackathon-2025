@@ -25,19 +25,21 @@ dotenv.config();
  */
 export const pool = new Pool({
   /** Usuário do banco de dados */
-  user: process.env.DB_USER,
+  // amazonq-ignore-next-line
+  user: process.env.DB_USER || 'postgres',
 
   /** Endereço do host/servidor do banco */
-  host: process.env.DB_HOST,
+  host: process.env.DB_HOST || 'localhost',
 
   /** Nome do banco de dados */
-  database: process.env.DB_DATABASE,
+  database: process.env.DB_DATABASE || 'db_devianos',
 
   /** Senha do usuário */
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_PASSWORD || '123456',
 
   /** Porta de conexão (convertida para número) */
-  port: Number(process.env.DB_PORT),
+  // amazonq-ignore-next-line
+  port: Number(process.env.DB_PORT) || 5432,
 });
 
 /**

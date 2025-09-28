@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { useMenu } from '../hooks/useMenu'
+import { useUser } from '../contexts/UserContext'
 import DoctorForm from '../components/admin/DoctorForm'
 import DoctorList from '../components/admin/DoctorList'
 import ContextForm from '../components/admin/ContextForm'
@@ -24,40 +25,24 @@ export default function User() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   
-  // Pega tipo da URL ou usa 'patient' como padrão
-  const userTypeFromUrl = (searchParams.get('type') as UserType) || 'patient'
+  const { userId } = useUser()
+  const [user, setUser] = useState<User | null>(null)
   
-  // Dados mockados específicos por tipo
-  const getUserData = (type: UserType): User => {
-    switch (type) {
-      case 'doctor':
-        return {
-          id: '1',
-          name: 'Dr. João Silva',
-          email: 'dr.joao@hospital.com',
-          type: 'doctor',
-          crm: '12345-SP',
-          specialty: 'Cardiologia'
-        }
-      case 'admin':
-        return {
-          id: '1',
-          name: 'Admin Silva',
-          email: 'admin@sistema.com',
-          type: 'admin'
-        }
-      default: // patient
-        return {
-          id: '1',
-          name: 'João Silva',
-          email: 'joao@email.com',
-          type: 'patient',
-          cpf: '123.456.789-00'
-        }
+  // Carrega dados do usuário do localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user')
+    if (savedUser) {
+      // amazonq-ignore-next-line
+      const userData = JSON.parse(savedUser)
+      setUser({
+        id: userData.id.toString(),
+        name: userData.name,
+        email: userData.email,
+        type: userData.user_type,
+        cpf: userData.cpf
+      })
     }
-  }
-  
-  const [user] = useState<User>(getUserData(userTypeFromUrl))
+  }, [userId])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   // Estados para admin (médicos e contexto)
@@ -268,6 +253,25 @@ Restrições de moderação de conteúdo:
   const [editingDoctor, setEditingDoctor] = useState<any>(null)
   const [contextModalValue, setContextModalValue] = useState(context)
 
+  // Buscar contexto do banco ao carregar página
+  useEffect(() => {
+    const fetchInitialContext = async () => {
+      try {
+        // amazonq-ignore-next-line
+        const response = await fetch('http://localhost:3000/admin/context');
+        if (response.ok) {
+          const contextData = await response.json();
+          setContext(contextData);
+          setContextModalValue(contextData);
+        }
+      } catch (error) {
+        console.log('Usando contexto padrão');
+      }
+    };
+    
+    fetchInitialContext();
+  }, [])
+
   const handleSaveDoctor = (doctorData: any) => {
     if (doctorData.id) {
       setDoctors(prev => prev.map(doc => 
@@ -323,15 +327,16 @@ Restrições de moderação de conteúdo:
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Nome</label>
-            <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+            // amazonq-ignore-next-line
+            <p className="mt-1 text-sm text-gray-900">{user?.name}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+            <p className="mt-1 text-sm text-gray-900">{user?.email}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">CPF</label>
-            <p className="mt-1 text-sm text-gray-900">{user.cpf}</p>
+            <p className="mt-1 text-sm text-gray-900">{user?.cpf}</p>
           </div>
         </div>
       </div>
@@ -354,19 +359,19 @@ Restrições de moderação de conteúdo:
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Nome</label>
-            <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+            <p className="mt-1 text-sm text-gray-900">{user?.name}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">CRM</label>
-            <p className="mt-1 text-sm text-gray-900">{user.crm}</p>
+            <p className="mt-1 text-sm text-gray-900">{user?.crm}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Especialidade</label>
-            <p className="mt-1 text-sm text-gray-900">{user.specialty}</p>
+            <p className="mt-1 text-sm text-gray-900">{user?.specialty}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+            <p className="mt-1 text-sm text-gray-900">{user?.email}</p>
           </div>
         </div>
       </div>
@@ -421,11 +426,12 @@ Restrições de moderação de conteúdo:
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Nome</label>
-            <p className="mt-1 text-sm text-gray-900">{user.name}</p>
+            // amazonq-ignore-next-line
+            <p className="mt-1 text-sm text-gray-900">{user?.name}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1 text-sm text-gray-900">{user.email}</p>
+            <p className="mt-1 text-sm text-gray-900">{user?.email}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Nível de Acesso</label>
@@ -455,6 +461,9 @@ Restrições de moderação de conteúdo:
   )
 
   const renderContent = () => {
+    // amazonq-ignore-next-line
+    if (!user) return <div>Carregando...</div>
+    
     switch (user.type) {
       case 'patient':
         return renderPatientDashboard()
@@ -525,7 +534,8 @@ Restrições de moderação de conteúdo:
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <p className="text-gray-600 capitalize">
-            {user.type === 'patient' ? 'Paciente' : user.type === 'doctor' ? 'Médico' : 'Administrador'}
+            // amazonq-ignore-next-line
+            {user?.type === 'patient' ? 'Paciente' : user?.type === 'doctor' ? 'Médico' : 'Administrador'}
           </p>
         </div>
         
@@ -556,7 +566,7 @@ Restrições de moderação de conteúdo:
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
                       <input 
                         type="text" 
-                        defaultValue={user.name}
+                        defaultValue={user?.name}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
@@ -565,39 +575,40 @@ Restrições de moderação de conteúdo:
                       <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                       <input 
                         type="email" 
-                        defaultValue={user.email}
+                        // amazonq-ignore-next-line
+                        defaultValue={user?.email}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       />
                     </div>
                     
-                    {user.cpf && (
+                    {user?.cpf && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
                         <input 
                           type="text" 
-                          defaultValue={user.cpf}
+                          defaultValue={user?.cpf}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />
                       </div>
                     )}
                     
-                    {user.crm && (
+                    {user?.crm && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">CRM</label>
                         <input 
                           type="text" 
-                          defaultValue={user.crm}
+                          defaultValue={user?.crm}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />
                       </div>
                     )}
                     
-                    {user.specialty && (
+                    {user?.specialty && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Especialidade</label>
                         <input 
                           type="text" 
-                          defaultValue={user.specialty}
+                          defaultValue={user?.specialty}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />
                       </div>

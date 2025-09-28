@@ -14,8 +14,18 @@ interface UserProviderProps {
 
 export function UserProvider({ children }: UserProviderProps) {
   const [userId, setUserId] = useState<string | null>(() => {
-    // Simula usuário logado com ID 1 para testes
-    return localStorage.getItem('userId') || '1'
+    const savedUser = localStorage.getItem('user')
+    const savedLoginStatus = localStorage.getItem('isLoggedIn')
+    
+    if (savedUser && savedLoginStatus === 'true') {
+      try {
+        const user = JSON.parse(savedUser)
+        return user.id.toString()
+      } catch {
+        return null
+      }
+    }
+    return null
   })
 
   useEffect(() => {

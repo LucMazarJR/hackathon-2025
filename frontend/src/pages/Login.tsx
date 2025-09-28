@@ -1,24 +1,48 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useUser } from '../contexts/UserContext'
+import { loginUser } from '../lib/api/auth/authApi'
+import { fetchContext } from '../lib/api/adm/fetchBotContext'
 
 export default function Login() {
   const { setUserId } = useUser()
   const navigate = useNavigate()
+  const location = useLocation()
   const [formData, setFormData] = useState({
-    email: '',
+    email: new URLSearchParams(location.search).get('email') || '',
     password: ''
   })
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Fazer login na API
-    console.log('Login:', formData)
+    setError('')
+    setIsLoading(true)
     
-    // Exemplo: após login bem-sucedido
-    const userId = '123' // ID retornado da API
-    setUserId(userId)
-    navigate('/profile')
+    try {
+      const result = await loginUser(formData)
+      
+      if (result.success) {
+        setUserId(result.data.user.id.toString())
+        
+        // Busca contexto do bot após login
+        try {
+          await fetchContext('')
+        } catch (error) {
+          console.log('Contexto padrão será usado')
+        }
+        
+        navigate('/user')
+      } else {
+        setError(result.data.message)
+      }
+    } catch (error) {
+      console.error('Erro no login:', error)
+      setError('Erro de conexão')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,13 +61,18 @@ export default function Login() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Ou{' '}
-            <Link to="/welcome" className="font-medium text-green-600 hover:text-green-500">
+            <Link to="/auth" className="font-medium text-green-600 hover:text-green-500">
               começar aqui
             </Link>
           </p>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -79,9 +108,10 @@ export default function Login() {
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              disabled={isLoading}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
             >
-              Entrar
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
           </div>
         </form>

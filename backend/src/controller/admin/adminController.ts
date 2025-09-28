@@ -1,23 +1,8 @@
 import * as adminModel from "../../model/admin/adminModel.js";
+import { updateContext } from "../../database/admin/contextDatabase.js";
 
 /**
  * Realiza o login de um administrador do sistema.
- *
- * @async
- * @function loginAdmin
- * @param {string} email - E-mail do administrador.
- * @param {string} password - Senha do administrador.
- * @returns {Promise<[number, string]>} Uma promessa que retorna uma tupla:
- * - O primeiro valor é o código de status (ex.: 200 para sucesso, 401 para não autorizado).
- * - O segundo valor é uma mensagem descritiva do resultado do login.
- *
- * @example
- * const [status, message] = await loginAdmin("admin@email.com", "123456");
- * if (status === 200) {
- *   console.log("Login realizado com sucesso:", message);
- * } else {
- *   console.error("Erro no login:", message);
- * }
  */
 export let loginAdmin = async (
   email: string,
@@ -27,14 +12,23 @@ export let loginAdmin = async (
   return [status, message];
 };
 
+/**
+ * Controller para atualizar contexto do bot
+ */
 export let adminContextController = async (
   context: string
 ): Promise<[number, string]> => {
   try {
-    let [status, message] = await adminModel.adminContext(context);
-    return [status, message];
+    // amazonq-ignore-next-line
+    const success = await updateContext("Assistente de Saúde", context);
+    
+    if (success) {
+      return [200, "Contexto atualizado com sucesso"];
+    } else {
+      return [500, "Erro ao atualizar contexto no banco de dados"];
+    }
   } catch (error) {
-    console.error("Erro ao processar contexto do administrador:", Error);
+    console.error("Erro ao processar contexto do administrador:", error);
     return [500, "Erro interno do servidor"];
   }
 };

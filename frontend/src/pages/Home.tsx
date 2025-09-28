@@ -14,7 +14,7 @@ export default function Home() {
         </p>
         <NavButton
           className="w-full tablet:w-auto bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-green-700 transition-colors"
-          path="/login"
+          path="/welcome"
         >
           Começar Agora
         </NavButton>
