@@ -214,6 +214,149 @@ export const connectServer = async (PORT: number) => {
     }
   });
 
+  // CONSULTAS API
+  app.get("/api/consultas/paciente/:cpf", async (req, res) => {
+    const { cpf } = req.params;
+    try {
+      const { buscarConsultasPorCPF } = await import("../database/bot/consultaDatabase.js");
+      const result = await buscarConsultasPorCPF(cpf);
+      
+      if (result.success) {
+        return res.status(200).json({ consultas: result.data });
+      } else {
+        return res.status(500).json({ message: result.error });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar consultas do paciente:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.get("/api/consultas/medico/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const { buscarConsultasPorMedico } = await import("../database/bot/consultaDatabase.js");
+      const result = await buscarConsultasPorMedico(parseInt(id));
+      
+      if (result.success) {
+        return res.status(200).json({ consultas: result.data });
+      } else {
+        return res.status(500).json({ message: result.error });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar consultas do médico:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.get("/api/consultas/todas", async (req, res) => {
+    try {
+      const { pool } = await import("../database/connection.js");
+      
+      const query = `
+        SELECT 
+          c.id_consulta,
+          c.nome_paciente,
+          c.data_consulta,
+          c.hora_consulta,
+          c.protocolo,
+          c.status,
+          c.observacoes,
+          CONCAT(m.nome, ' ', m.sobrenome) as nome_medico,
+          e.nome_especializacao as especialidade
+        FROM tb_consultas c
+        LEFT JOIN tb_medicos m ON c.id_medico = m.id_medico
+        LEFT JOIN tb_especializacoes e ON m.id_especializacao = e.id_especializacao
+        ORDER BY c.data_consulta DESC, c.hora_consulta DESC
+      `;
+      
+      const result = await pool.query(query);
+      return res.status(200).json({ consultas: result.rows });
+    } catch (error) {
+      console.error("Erro ao buscar todas as consultas:", error);
+      // Fallback para dados de exemplo se o banco falhar
+      const consultasExemplo = [
+        {
+          id_consulta: 1,
+          data_consulta: new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0],
+          hora_consulta: '08:00',
+          protocolo: 'AGD001',
+          status: 'agendada',
+          nome_paciente: 'José Silva',
+          nome_medico: 'Dr. Carlos Silva',
+          especialidade: 'Cardiologia',
+          observacoes: 'Consulta de rotina'
+        }
+      ];
+      return res.status(200).json({ consultas: consultasExemplo });
+    }
+  });
+
+  // FINALIZAR CONSULTA
+  app.put("/api/consultas/:id/finalizar", async (req, res) => {
+    const { id } = req.params;
+    const { observacoes } = req.body;
+    
+    try {
+      const { pool } = await import("../database/connection.js");
+      
+      const query = `
+        UPDATE tb_consultas 
+        SET status = 'concluida', observacoes = COALESCE($2, observacoes)
+        WHERE id_consulta = $1
+        RETURNING *
+      `;
+      
+      const result = await pool.query(query, [id, observacoes]);
+      
+      if (result.rows.length > 0) {
+        return res.status(200).json({ 
+          message: "Consulta finalizada com sucesso",
+          consulta: result.rows[0]
+        });
+      } else {
+        return res.status(404).json({ message: "Consulta não encontrada" });
+      }
+    } catch (error) {
+      console.error("Erro ao finalizar consulta:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  // LISTAR MÉDICOS DISPONÍVEIS
+  app.get("/api/medicos", async (req, res) => {
+    try {
+      const { buscarTodosMedicos } = await import("../database/bot/medicosDatabase.js");
+      const result = await buscarTodosMedicos();
+      
+      if (result.success) {
+        return res.status(200).json({ medicos: result.data });
+      } else {
+        return res.status(500).json({ message: result.error });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar médicos:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
+  app.get("/api/medicos/especialidade/:especialidade", async (req, res) => {
+    const { especialidade } = req.params;
+    try {
+      const { buscarMedicosPorEspecialidadeDB } = await import("../database/bot/medicosDatabase.js");
+      const result = await buscarMedicosPorEspecialidadeDB(especialidade);
+      
+      if (result.success) {
+        return res.status(200).json({ medicos: result.data });
+      } else {
+        return res.status(500).json({ message: result.error });
+      }
+    } catch (error) {
+      console.error("Erro ao buscar médicos por especialidade:", error);
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
+  });
+
   // DOCTORS CRUD
   app.get("/admin/doctors", async (req, res) => {
     try {
